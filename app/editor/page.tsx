@@ -62,7 +62,7 @@ const FormattedContent = ({ content }: { content: string }) => {
           <span
             key={index}
             style={{
-              color: '#FF6B35', // Orange color for hashtags
+              color: '#000000', // Black color for hashtags
               fontWeight: '700'
             }}
           >
@@ -242,17 +242,17 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 80; // Padding for 1080px canvas
+    const padding = 60; // Professional padding for 1080px canvas
     const canvasWidth = 1080;
     const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
 
-    // EMOJI - Position for 1080px canvas
+    // EMOJI - Top center position
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 160, // Scaled for 1080px
-        fontSize: 80, // Scaled for 1080px
+        top: 120, // Professional top spacing
+        fontSize: 72, // Slightly smaller for better proportion
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
@@ -261,12 +261,12 @@ function EditorPageContent() {
       canvas.add(emoji);
     }
 
-    // TITLE - Position for 1080px canvas
+    // TITLE - Below emoji with proper spacing
     if (slide.title) {
-      const titleFontSize = 44; // Scaled for 1080px
+      const titleFontSize = 48; // Larger, more impactful title
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      const titleLineHeight = titleFontSize * 1.2;
-      const titleStartY = 280; // Scaled for 1080px
+      const titleLineHeight = titleFontSize * 1.15; // Tighter line height for titles
+      const titleStartY = 220; // Professional spacing from emoji
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -285,16 +285,16 @@ function EditorPageContent() {
       });
     }
 
-    // CONTENT - Position for 1080px canvas with proper hashtag handling
+    // CONTENT - Professional spacing and layout
     if (slide.content) {
       // Split content into main content and hashtags
       const contentParts = slide.content.split(/(\s*#\w+(?:\s+#\w+)*\s*)$/);
       const mainContent = contentParts[0]?.trim() || '';
       const hashtagsPart = contentParts[1]?.trim() || '';
 
-      const contentFontSize = 28; // Scaled for 1080px
+      const contentFontSize = 32; // Larger, more readable content
       const contentLineHeight = contentFontSize * 1.4;
-      const contentStartY = 480; // Scaled for 1080px
+      const contentStartY = 420; // Professional spacing from title
 
       // Add main content
       if (mainContent) {
@@ -315,9 +315,9 @@ function EditorPageContent() {
           canvas.add(content);
         });
 
-        // Add hashtags on separate lines with proper spacing
+        // Add hashtags with professional spacing
         if (hashtagsPart) {
-          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 50; // Add extra spacing
+          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 60; // Extra spacing before hashtags
           const hashtags = hashtagsPart.split(/\s+/).filter(tag => tag.startsWith('#'));
           
           // Group hashtags into lines that fit
@@ -345,20 +345,19 @@ function EditorPageContent() {
             hashtagLines.push(currentHashtagLine);
           }
 
-          // Render hashtag lines
+          // Render hashtag lines with black color
           hashtagLines.forEach((line, index) => {
             const hashtagText = new FabricText(line, {
               left: canvasWidth / 2,
               top: hashtagStartY + (index * contentLineHeight),
               fontSize: contentFontSize,
               fontFamily: slide.contentFontFamily || 'Inter',
-              fill: '#FF6B35', // Orange color for hashtags
+              fill: '#000000', // Black color for hashtags
               fontWeight: 'bold',
               textAlign: 'center',
               originX: 'center',
               originY: 'center',
               selectable: false
-              // No shadow for hashtags
             });
             canvas.add(hashtagText);
           });
@@ -908,7 +907,7 @@ function EditorPageContent() {
                   {currentSlideData.emoji && (
                     <div 
                       className="absolute text-4xl"
-                      style={{ top: '80px' }} // Scaled for 540px preview (160px / 2)
+                      style={{ top: '60px' }} // Scaled for 540px preview (120px / 2)
                     >
                       {currentSlideData.emoji}
                     </div>
@@ -918,7 +917,7 @@ function EditorPageContent() {
                     <h2
                       className="absolute text-2xl font-bold text-center w-full px-6 leading-tight"
                       style={{
-                        top: '140px', // Scaled for 540px preview (280px / 2)
+                        top: '110px', // Scaled for 540px preview (220px / 2)
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -933,9 +932,9 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute text-sm w-full px-6 leading-relaxed"
+                      className="absolute text-base w-full px-6 leading-relaxed"
                       style={{
-                        top: '240px', // Scaled for 540px preview (480px / 2)
+                        top: '210px', // Scaled for 540px preview (420px / 2)
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
