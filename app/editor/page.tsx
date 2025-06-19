@@ -167,9 +167,85 @@ function EditorPageContent() {
       const canvas = new Canvas(canvasElement);
       canvas.setWidth(1080);
       canvas.setHeight(1080);
-      canvas.backgroundColor = slide.backgroundColor || colors[currentSlide % colors.length];
       
-      if (slide.backgroundImage) {
+      // Debug: Log slide background data
+      console.log('Download Debug - Slide data:', {
+        backgroundType: slide.backgroundType,
+        backgroundColor: slide.backgroundColor,
+        gradient: slide.gradient,
+        backgroundImage: slide.backgroundImage
+      });
+      
+      // Handle different background types properly
+      // Auto-detect background type if not set
+      const actualBackgroundType = slide.backgroundType || 
+        (slide.gradient ? 'gradient' : 
+         slide.backgroundImage ? 'image' : 'color');
+      
+      console.log('Download Debug - Using background type:', actualBackgroundType);
+      
+      if (actualBackgroundType === 'gradient' && slide.gradient) {
+        // Create gradient background
+        const ctx = canvasElement.getContext('2d');
+        if (ctx) {
+                    // Parse gradient string and create canvas gradient
+          const tempDiv = document.createElement('div');
+          tempDiv.style.background = slide.gradient;
+          tempDiv.style.width = '1080px';
+          tempDiv.style.height = '1080px';
+          document.body.appendChild(tempDiv);
+          
+          // Create a more robust gradient parser
+          const gradientMatch = slide.gradient.match(/linear-gradient\(([^)]+)\)/);
+          if (gradientMatch) {
+            const gradientString = gradientMatch[1];
+            
+            // Better parsing that handles rgba() colors properly
+            const angleMatch = gradientString.match(/^(\d+deg)/);
+            const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
+            
+            // Remove the angle part first
+            const withoutAngle = gradientString.replace(/^\d+deg,?\s*/, '');
+            
+            // Extract color stops using regex that handles rgba() properly
+            const colorStopPattern = /((?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[a-fA-F0-9]{3,6}|(?:red|blue|green|yellow|orange|purple|pink|brown|black|white|gray|grey|transparent)))\s*(\d+%)?/g;
+            const colorStops: Array<{color: string, position?: number}> = [];
+            let match;
+            
+            while ((match = colorStopPattern.exec(withoutAngle)) !== null) {
+              const color = match[1].trim();
+              const position = match[2] ? parseInt(match[2]) / 100 : undefined;
+              colorStops.push({ color, position });
+            }
+              
+              // If no explicit positions, distribute evenly
+              if (colorStops.length > 0) {
+                // Calculate gradient coordinates based on angle
+                const angleRad = (angle - 90) * Math.PI / 180;
+                const x1 = 540 + Math.cos(angleRad) * 540;
+                const y1 = 540 + Math.sin(angleRad) * 540;
+                const x2 = 540 - Math.cos(angleRad) * 540;
+                const y2 = 540 - Math.sin(angleRad) * 540;
+                
+                const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+                
+                colorStops.forEach((stop, index) => {
+                  const position = stop.position !== undefined ? stop.position : (index / (colorStops.length - 1));
+                  gradient.addColorStop(position, stop.color);
+                });
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 1080, 1080);
+              }
+            } else {
+            // Fallback to solid color
+            canvas.backgroundColor = slide.backgroundColor || colors[currentSlide % colors.length];
+          }
+          
+          document.body.removeChild(tempDiv);
+        }
+      } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
+        // Handle background image
         const imgElement = new Image();
         imgElement.crossOrigin = 'anonymous';
         imgElement.onload = () => {
@@ -193,16 +269,32 @@ function EditorPageContent() {
             }
             
             canvas.add(fabricImg);
-            
             addTextToCanvas(canvas, slide);
             downloadCanvas(canvas, slide.title || 'slide');
           });
         };
         imgElement.src = slide.backgroundImage;
+        return; // Exit early since we're handling async image loading
       } else {
-        addTextToCanvas(canvas, slide);
-        downloadCanvas(canvas, slide.title || 'slide');
+        // Handle solid color background
+        const bgColor = slide.backgroundColor || colors[currentSlide % colors.length];
+        console.log('Download Debug - Setting solid background color:', bgColor);
+        
+        // Set canvas background using both methods to ensure it works
+        canvas.backgroundColor = bgColor;
+        
+        // Also draw a background rectangle as fallback
+        const ctx = canvasElement.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, 1080, 1080);
+        }
       }
+      
+      // Add text content and download (for non-image backgrounds)
+      addTextToCanvas(canvas, slide);
+      downloadCanvas(canvas, slide.title || 'slide');
+      
     } catch (error) {
       console.error('Error downloading slide:', error);
     } finally {
@@ -242,142 +334,176 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 60; // Professional padding for 1080px canvas
+    const padding = 80; // More generous padding for better look
     const canvasWidth = 1080;
     const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
-
-    // EMOJI - Top center position
+    
+    // Calculate total content height for perfect vertical centering
+    let totalContentHeight = 0;
+    let emojiHeight = 0;
+    let titleHeight = 0;
+    let contentHeight = 0;
+    let hashtagHeight = 0;
+    
+    const emojiSize = 80;
+    const titleFontSize = 52;
+    const contentFontSize = 32;
+    const spacing = 40; // Consistent spacing between elements
+    
+    // Calculate emoji height
+    if (slide.emoji) {
+      emojiHeight = emojiSize + spacing;
+    }
+    
+    // Calculate title height
+    if (slide.title) {
+      const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
+      titleHeight = (titleLines.length * titleFontSize * 1.2) + spacing;
+    }
+    
+    // Calculate content height
+    let mainContent = '';
+    let hashtagsPart = '';
+    if (slide.content) {
+      const { mainContent: main, hashtags } = splitContentAndHashtags(slide.content);
+      mainContent = main;
+      hashtagsPart = hashtags;
+      
+      if (mainContent) {
+        const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
+        contentHeight = (contentLines.length * contentFontSize * 1.3) + spacing;
+      }
+      
+      if (hashtagsPart) {
+        const hashtagLines = wrapText(hashtagsPart, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
+        hashtagHeight = hashtagLines.length * contentFontSize * 1.3;
+      }
+    }
+    
+    // Calculate total height and starting Y position for perfect centering
+    totalContentHeight = emojiHeight + titleHeight + contentHeight + hashtagHeight;
+    const centerY = canvasHeight / 2;
+    const startY = centerY - (totalContentHeight / 2);
+    
+    let currentY = startY;
+    
+    // EMOJI - Perfectly centered at the top
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 120, // Professional top spacing
-        fontSize: 72, // Slightly smaller for better proportion
+        top: currentY + (emojiSize / 2),
+        fontSize: emojiSize,
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
-        selectable: false
+        selectable: false,
+        shadow: new Shadow({
+          color: 'rgba(0,0,0,0.3)',
+          blur: 10,
+          offsetX: 0,
+          offsetY: 2
+        })
       });
       canvas.add(emoji);
+      currentY += emojiHeight;
     }
 
-    // TITLE - Below emoji with proper spacing
+    // TITLE - Perfectly centered below emoji
     if (slide.title) {
-      const titleFontSize = 48; // Larger, more impactful title
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      const titleLineHeight = titleFontSize * 1.15; // Tighter line height for titles
-      const titleStartY = 220; // Professional spacing from emoji
-
+      const titleLineHeight = titleFontSize * 1.2;
+      
+      // Center the title block
+      const titleBlockHeight = titleLines.length * titleLineHeight;
+      let titleY = currentY + (titleBlockHeight / 2) - (titleLineHeight / 2);
+      
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
           left: canvasWidth / 2,
-          top: titleStartY + (index * titleLineHeight),
+          top: titleY + (index * titleLineHeight),
           fontSize: titleFontSize,
           fontFamily: slide.titleFontFamily || 'Inter',
           fill: slide.titleColor || '#FFFFFF',
-          textAlign: slide.titleAlign || 'center',
+          textAlign: 'center',
           originX: 'center',
           originY: 'center',
           fontWeight: 'bold',
-          selectable: false
+          selectable: false,
+          shadow: new Shadow({
+            color: 'rgba(0,0,0,0.4)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2
+          })
         });
         canvas.add(title);
       });
+      currentY += titleHeight;
     }
 
-    // CONTENT - Professional spacing and layout with better hashtag handling
-    if (slide.content) {
-      // Split content into main content and hashtags more intelligently
-      const contentParts = slide.content.split(/(\s*#\w+(?:\s+#\w+)*\s*)$/);
-      let mainContent = contentParts[0]?.trim() || '';
-      let hashtagsPart = '';
+    // CONTENT - Perfectly centered below title
+    if (mainContent) {
+      const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
+      const contentLineHeight = contentFontSize * 1.3;
       
-      // Find hashtags in the content
-      const hashtagMatches = slide.content.match(/#\w+/g);
-      if (hashtagMatches) {
-        // Remove hashtags from main content
-        hashtagMatches.forEach(hashtag => {
-          mainContent = mainContent.replace(hashtag, '').trim();
+      // Center the content block
+      const contentBlockHeight = contentLines.length * contentLineHeight;
+      let contentY = currentY + (contentBlockHeight / 2) - (contentLineHeight / 2);
+      
+      contentLines.forEach((line, index) => {
+        const content = new FabricText(line, {
+          left: canvasWidth / 2,
+          top: contentY + (index * contentLineHeight),
+          fontSize: contentFontSize,
+          fontFamily: slide.contentFontFamily || 'Inter',
+          fill: slide.contentColor || '#FFFFFF',
+          textAlign: 'center',
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          shadow: new Shadow({
+            color: 'rgba(0,0,0,0.3)',
+            blur: 6,
+            offsetX: 0,
+            offsetY: 1
+          })
         });
-        hashtagsPart = hashtagMatches.join(' ');
-      }
-
-      const contentFontSize = 28; // Slightly smaller to fit more content
-      const contentLineHeight = contentFontSize * 1.4;
-      const contentStartY = 380; // Adjusted for better spacing
-
-      // Add main content
-      if (mainContent) {
-        const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-        
-        contentLines.forEach((line, index) => {
-          const content = new FabricText(line, {
-            left: canvasWidth / 2,
-            top: contentStartY + (index * contentLineHeight),
-            fontSize: contentFontSize,
-            fontFamily: slide.contentFontFamily || 'Inter',
-            fill: slide.contentColor || '#FFFFFF',
-            textAlign: slide.contentAlign || 'center',
-            originX: 'center',
-            originY: 'center',
-            selectable: false
-          });
-          canvas.add(content);
+        canvas.add(content);
+      });
+      currentY += contentHeight;
+    }
+    
+    // HASHTAGS - Perfectly centered below content
+    if (hashtagsPart) {
+      const hashtagLines = wrapText(hashtagsPart, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
+      const hashtagLineHeight = contentFontSize * 1.3;
+      
+      // Center the hashtag block
+      const hashtagBlockHeight = hashtagLines.length * hashtagLineHeight;
+      let hashtagY = currentY + (hashtagBlockHeight / 2) - (hashtagLineHeight / 2);
+      
+      hashtagLines.forEach((line, index) => {
+        const hashtagText = new FabricText(line, {
+          left: canvasWidth / 2,
+          top: hashtagY + (index * hashtagLineHeight),
+          fontSize: contentFontSize,
+          fontFamily: slide.contentFontFamily || 'Inter',
+          fill: '#000000', // Black color for hashtags
+          fontWeight: 'bold',
+          textAlign: 'center',
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          shadow: new Shadow({
+            color: 'rgba(255,255,255,0.8)',
+            blur: 4,
+            offsetX: 0,
+            offsetY: 1
+          })
         });
-
-        // Add hashtags with professional spacing - positioned lower to ensure visibility
-        if (hashtagsPart) {
-          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 40; // Reduced spacing
-          const hashtags = hashtagsPart.split(/\s+/).filter(tag => tag.startsWith('#'));
-          
-          // Group hashtags into lines that fit, with more conservative width
-          const hashtagLines: string[] = [];
-          let currentHashtagLine = '';
-          const hashtagMaxWidth = contentWidth * 0.9; // Use 90% of available width for safety
-          
-          hashtags.forEach(hashtag => {
-            const testLine = currentHashtagLine + (currentHashtagLine ? ' ' : '') + hashtag;
-            const tempCanvas = document.createElement('canvas');
-            const ctx = tempCanvas.getContext('2d');
-            if (ctx) {
-              ctx.font = `bold ${contentFontSize}px ${slide.contentFontFamily || 'Inter'}`;
-              const testWidth = ctx.measureText(testLine).width;
-              
-              if (testWidth > hashtagMaxWidth && currentHashtagLine) {
-                hashtagLines.push(currentHashtagLine);
-                currentHashtagLine = hashtag;
-              } else {
-                currentHashtagLine = testLine;
-              }
-            }
-          });
-          
-          if (currentHashtagLine) {
-            hashtagLines.push(currentHashtagLine);
-          }
-
-          // Render hashtag lines with black color and ensure they fit
-          hashtagLines.forEach((line, index) => {
-            const hashtagY = hashtagStartY + (index * contentLineHeight);
-            // Only add hashtag line if it fits within canvas bounds
-            if (hashtagY + contentFontSize < canvasHeight - padding) {
-              const hashtagText = new FabricText(line, {
-                left: canvasWidth / 2,
-                top: hashtagY,
-                fontSize: contentFontSize,
-                fontFamily: slide.contentFontFamily || 'Inter',
-                fill: '#000000', // Black color for hashtags
-                fontWeight: 'bold',
-                textAlign: 'center',
-                originX: 'center',
-                originY: 'center',
-                selectable: false
-              });
-              canvas.add(hashtagText);
-            }
-          });
-        }
-      }
+        canvas.add(hashtagText);
+      });
     }
   };
 
@@ -405,7 +531,78 @@ function EditorPageContent() {
         const canvas = new Canvas(canvasElement);
         canvas.setWidth(1080);
         canvas.setHeight(1080);
-        canvas.backgroundColor = slide.backgroundColor || colors[i % colors.length];
+        
+        // Handle different background types properly
+        if (slide.backgroundType === 'gradient' && slide.gradient) {
+          // Create gradient background
+          const ctx = canvasElement.getContext('2d');
+          if (ctx) {
+            // Parse gradient string and create canvas gradient
+            const gradientMatch = slide.gradient.match(/linear-gradient\(([^)]+)\)/);
+            if (gradientMatch) {
+              const gradientString = gradientMatch[1];
+              
+              // Better parsing that handles rgba() colors properly
+              const angleMatch = gradientString.match(/^(\d+deg)/);
+              const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
+              
+              // Remove the angle part first
+              const withoutAngle = gradientString.replace(/^\d+deg,?\s*/, '');
+              
+              // Extract color stops using regex that handles rgba() properly
+              const colorStopPattern = /((?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[a-fA-F0-9]{3,6}|(?:red|blue|green|yellow|orange|purple|pink|brown|black|white|gray|grey|transparent)))\s*(\d+%)?/g;
+              const colorStops: Array<{color: string, position?: number}> = [];
+              let match;
+              
+              while ((match = colorStopPattern.exec(withoutAngle)) !== null) {
+                const color = match[1].trim();
+                const position = match[2] ? parseInt(match[2]) / 100 : undefined;
+                colorStops.push({ color, position });
+              }
+              
+              // If no explicit positions, distribute evenly
+              if (colorStops.length > 0) {
+                // Calculate gradient coordinates based on angle
+                const angleRad = (angle - 90) * Math.PI / 180;
+                const x1 = 540 + Math.cos(angleRad) * 540;
+                const y1 = 540 + Math.sin(angleRad) * 540;
+                const x2 = 540 - Math.cos(angleRad) * 540;
+                const y2 = 540 - Math.sin(angleRad) * 540;
+                
+                const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+                
+                colorStops.forEach((stop, index) => {
+                  const position = stop.position !== undefined ? stop.position : (index / (colorStops.length - 1));
+                  gradient.addColorStop(position, stop.color);
+                });
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 1080, 1080);
+              }
+            } else {
+              // Fallback to solid color
+              canvas.backgroundColor = slide.backgroundColor || colors[i % colors.length];
+            }
+          }
+        } else if (slide.backgroundType === 'image' && slide.backgroundImage) {
+          // For batch processing, we'll skip images for now or handle them synchronously
+          // This could be enhanced to handle images properly in batch
+          canvas.backgroundColor = slide.backgroundColor || colors[i % colors.length];
+        } else {
+          // Handle solid color background
+          const bgColor = slide.backgroundColor || colors[i % colors.length];
+          console.log('Zip Download Debug - Setting solid background color:', bgColor);
+          
+          // Set canvas background using both methods to ensure it works
+          canvas.backgroundColor = bgColor;
+          
+          // Also draw a background rectangle as fallback
+          const ctx = canvasElement.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, 1080, 1080);
+          }
+        }
         
         addTextToCanvas(canvas, slide);
         
@@ -925,7 +1122,25 @@ function EditorPageContent() {
                 </button>
                 
                 {showColorPanel && (
-                  <div className="p-3 border-t border-gray-200">
+                  <div className="p-3 border-t border-gray-200 space-y-3">
+                    {/* Current Emoji with Delete Option */}
+                    {currentSlideData.emoji && (
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{currentSlideData.emoji}</span>
+                          <span className="text-sm text-gray-600">Current emoji</span>
+                        </div>
+                        <button
+                          onClick={() => updateSlide(currentSlideData.id, { emoji: undefined })}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          title="Remove emoji"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Emoji Grid */}
                     <div className="grid grid-cols-8 gap-2">
                       {emojis.map((emoji) => (
                         <button
@@ -1044,88 +1259,95 @@ function EditorPageContent() {
                   </>
                 )}
                 
-                {/* Content Layer - EXACT POSITIONING TO MATCH CANVAS */}
-                <div className="absolute inset-0 flex flex-col items-center text-white" style={{ padding: '15px' }}>
-                  {currentSlideData.emoji && (
-                    <div 
-                      className="absolute text-2xl"
-                      style={{ 
-                        top: '30px', // Scaled for preview (60px / 2)
-                        left: '50%',
-                        transform: 'translateX(-50%)'
-                      }}
-                    >
-                      {currentSlideData.emoji}
-                    </div>
-                  )}
-                  
-                  {currentSlideData.title && (
-                    <h2
-                      className="absolute text-lg font-bold text-center leading-tight"
-                      style={{
-                        top: '55px', // Scaled for preview (110px / 2)
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: 'calc(100% - 30px)', // Account for padding
-                        fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
-                        color: currentSlideData.titleColor || '#FFFFFF',
-                        textAlign: currentSlideData.titleAlign || 'center',
-                        wordWrap: 'break-word',
-                        overflowWrap: 'break-word',
-                        hyphens: 'auto'
-                      }}
-                    >
-                      {currentSlideData.title}
-                    </h2>
-                  )}
-                  
-                  {currentSlideData.content && (() => {
-                    const { mainContent, hashtags } = splitContentAndHashtags(currentSlideData.content);
-                    return (
-                      <>
-                        {/* Main Content */}
-                        {mainContent && (
-                          <div
-                            className="absolute text-xs leading-relaxed"
-                            style={{
-                              top: '95px', // Scaled for preview (190px / 2)
-                              left: '50%',
-                              transform: 'translateX(-50%)',
-                              width: 'calc(100% - 30px)', // Account for padding
-                              fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
-                              color: currentSlideData.contentColor || '#FFFFFF',
-                              textAlign: currentSlideData.contentAlign || 'center',
-                              wordWrap: 'break-word',
-                              overflowWrap: 'break-word',
-                              hyphens: 'auto'
-                            }}
-                          >
-                            {mainContent}
-                          </div>
-                        )}
-                        
-                        {/* Hashtags */}
-                        {hashtags && (
-                          <div
-                            className="absolute text-xs font-bold leading-relaxed"
-                            style={{
-                              top: '140px', // Positioned below main content
-                              left: '50%',
-                              transform: 'translateX(-50%)',
-                              width: 'calc(100% - 30px)', // Account for padding
-                              fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
-                              color: '#000000', // Black color for hashtags
-                              textAlign: 'center',
-                              wordWrap: 'break-word',
-                              overflowWrap: 'break-word'
-                            }}
-                          >
-                            {hashtags}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
+                {/* Content Layer - PROPERLY CENTERED AND ALIGNED */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
+                  {/* Container for all content with proper vertical centering */}
+                  <div className="w-full h-full flex flex-col items-center justify-center relative">
+                    {currentSlideData.emoji && (
+                      <div 
+                        className="text-3xl mb-4 text-center"
+                        style={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {currentSlideData.emoji}
+                      </div>
+                    )}
+                    
+                    {currentSlideData.title && (
+                      <h2
+                        className="text-lg font-bold leading-tight mb-4 w-full"
+                        style={{
+                          fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
+                          color: currentSlideData.titleColor || '#FFFFFF',
+                          textAlign: 'center',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          hyphens: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}
+                      >
+                        {currentSlideData.title}
+                      </h2>
+                    )}
+                    
+                    {currentSlideData.content && (() => {
+                      const { mainContent, hashtags } = splitContentAndHashtags(currentSlideData.content);
+                      return (
+                        <div className="w-full flex flex-col items-center justify-center">
+                          {/* Main Content */}
+                          {mainContent && (
+                            <div
+                              className="text-sm leading-relaxed mb-3 w-full"
+                              style={{
+                                fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
+                                color: currentSlideData.contentColor || '#FFFFFF',
+                                textAlign: 'center',
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                hyphens: 'auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                              }}
+                            >
+                              <div className="max-w-full">
+                                {mainContent}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Hashtags */}
+                          {hashtags && (
+                            <div
+                              className="text-sm font-bold leading-relaxed w-full"
+                              style={{
+                                fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
+                                color: '#000000',
+                                textAlign: 'center',
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textShadow: '0 1px 3px rgba(255,255,255,0.8)'
+                              }}
+                            >
+                              <div className="max-w-full">
+                                {hashtags}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             </motion.div>

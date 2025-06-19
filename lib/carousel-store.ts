@@ -145,6 +145,7 @@ export const useCarouselStore = create<CarouselState>()(
     const slidesWithColors = slides.map((slide, index) => ({
       ...slide,
       backgroundColor: slide.backgroundColor || colors[index % colors.length],
+      backgroundType: slide.backgroundType || (slide.gradient ? 'gradient' : slide.backgroundImage ? 'image' : 'color'),
       id: slide.id || `slide-${Date.now()}-${index}` // Ensure each slide has an ID
     }));
     
@@ -180,7 +181,8 @@ export const useCarouselStore = create<CarouselState>()(
       title: 'New Slide',
       content: 'Add your content here...',
       emoji: '✨',
-      backgroundColor: colors[slides.length % colors.length]
+      backgroundColor: colors[slides.length % colors.length],
+      backgroundType: 'color'
     };
     set({ slides: [...slides, newSlide] });
   },
