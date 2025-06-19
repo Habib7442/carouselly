@@ -17,9 +17,9 @@ interface ProfessionalPageProps {
 const photoshootTemplate: CarouselSlide[] = [
   {
     id: 'photoshoot-1',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Professional Portraits',
+    content: 'Upload your photo to apply cinematic lighting effects and create stunning professional portraits.',
+    emoji: '📸',
     backgroundColor: `
       radial-gradient(circle at 45% 35%, rgba(255, 165, 0, 0.15) 0%, transparent 35%),
       radial-gradient(ellipse at 55% 65%, rgba(218, 165, 32, 0.12) 0%, transparent 40%),
@@ -31,9 +31,9 @@ const photoshootTemplate: CarouselSlide[] = [
   },
   {
     id: 'photoshoot-2',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Studio Quality',
+    content: 'Experience professional-grade lighting that enhances facial features and creates depth.',
+    emoji: '✨',
     backgroundColor: `
       radial-gradient(circle at 40% 30%, rgba(255, 140, 0, 0.18) 0%, transparent 32%),
       radial-gradient(ellipse at 60% 70%, rgba(205, 133, 63, 0.1) 0%, transparent 38%),
@@ -45,9 +45,9 @@ const photoshootTemplate: CarouselSlide[] = [
   },
   {
     id: 'photoshoot-3',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Cinematic Effects',
+    content: 'Transform your photos with Hollywood-style lighting and dramatic shadows.',
+    emoji: '🎬',
     backgroundColor: `
       radial-gradient(circle at 50% 40%, rgba(218, 165, 32, 0.16) 0%, transparent 30%),
       radial-gradient(ellipse at 35% 60%, rgba(255, 215, 0, 0.08) 0%, transparent 35%),
@@ -59,9 +59,9 @@ const photoshootTemplate: CarouselSlide[] = [
   },
   {
     id: 'photoshoot-4',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Warm Lighting',
+    content: 'Perfect for creating intimate and inviting portrait photographs with natural warmth.',
+    emoji: '🔥',
     backgroundColor: `
       radial-gradient(circle at 42% 38%, rgba(255, 192, 203, 0.12) 0%, transparent 28%),
       radial-gradient(ellipse at 58% 62%, rgba(222, 184, 135, 0.09) 0%, transparent 33%),
@@ -73,9 +73,9 @@ const photoshootTemplate: CarouselSlide[] = [
   },
   {
     id: 'photoshoot-5',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Golden Hour',
+    content: 'Capture the magic of golden hour lighting with enhanced skin tones and soft shadows.',
+    emoji: '🌅',
     backgroundColor: `
       radial-gradient(circle at 48% 32%, rgba(255, 228, 181, 0.14) 0%, transparent 29%),
       radial-gradient(ellipse at 52% 68%, rgba(205, 133, 63, 0.08) 0%, transparent 36%),
@@ -87,9 +87,9 @@ const photoshootTemplate: CarouselSlide[] = [
   },
   {
     id: 'photoshoot-6',
-    title: '',
-    content: '',
-    emoji: '',
+    title: 'Artistic Portrait',
+    content: 'Create stunning artistic portraits with professional lighting techniques and color grading.',
+    emoji: '🎨',
     backgroundColor: `
       radial-gradient(circle at 46% 36%, rgba(255, 160, 122, 0.13) 0%, transparent 31%),
       radial-gradient(ellipse at 54% 64%, rgba(218, 165, 32, 0.07) 0%, transparent 34%),

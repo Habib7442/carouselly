@@ -338,7 +338,7 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
         // Optimized text positioning and sizing for 1080x1080
         const centerX = 540;
         const centerY = 540;
-        const maxTextWidth = 800; // Leave 80px padding on each side
+        const maxTextWidth = 650; // Leave 215px padding on each side to better match preview spacing
         
         // Calculate responsive font sizes based on content length
         const titleLength = (slide.title || '').length;
@@ -614,7 +614,7 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
             // Optimized text positioning and sizing for 1080x1080
             const centerX = 540;
             const centerY = 540;
-            const maxTextWidth = 900; // Leave 90px padding on each side
+            const maxTextWidth = 650; // Leave 215px padding on each side to better match preview spacing
             
             // Calculate responsive font sizes based on content length
             const titleLength = (slide.title || '').length;
@@ -647,8 +647,11 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
             if (slide.title) {
               const cleanTitle = slide.title.replace(/\s*[🎯🚀💪📈⚡💡🔥✨🎪🌟]+\s*$/, '');
               
+              // Truncate title if too long
+              const truncatedTitle = cleanTitle.length > 80 ? cleanTitle.substring(0, 77) + '...' : cleanTitle;
+              
               // Create title with text wrapping
-              const titleText = new FabricText(cleanTitle, {
+              const titleText = new FabricText(truncatedTitle, {
                 left: centerX,
                 top: currentY,
                 fontSize: titleFontSize,
@@ -678,7 +681,10 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
             
             // Add content with proper sizing and wrapping
             if (slide.content) {
-              const contentText = new FabricText(slide.content, {
+              // Truncate content if too long to ensure it fits
+              const truncatedContent = slide.content.length > 200 ? slide.content.substring(0, 197) + '...' : slide.content;
+              
+              const contentText = new FabricText(truncatedContent, {
                 left: centerX,
                 top: currentY,
                 fontSize: contentFontSize,
@@ -1037,7 +1043,7 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                         left: slidesWithColors[currentSlide]?.textPositionX || '50%',
                         top: slidesWithColors[currentSlide]?.textPositionY || '50%',
                         transform: 'translate(-50%, -50%)',
-                        width: 'calc(100% - 6rem)',
+                        width: '60%', /* 650px/1080px ≈ 60% to match download image text width */
                         maxWidth: '100%'
                       }}
                     >

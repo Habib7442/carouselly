@@ -30,6 +30,10 @@ export interface CarouselSlide {
   padding?: string;
   borderRadius?: string;
   shadow?: string;
+  _originalBackground?: string; // Internal flag for storage optimization
+  hashtags?: string[]; // Array of hashtags with different colors
+  isList?: boolean; // Flag to indicate if content should be formatted as a list
+  listItems?: string[]; // Array of list items
 }
 
 export interface CarouselRequest {
@@ -65,40 +69,74 @@ export class GeminiCarouselGenerator {
     const { topic, mode, slideCount, tone } = request;
     
     const modeInstructions = {
-      educational: 'Create educational content that teaches something valuable',
-      listicle: 'Create a list-based carousel with actionable tips or insights',
-      storytelling: 'Tell a compelling story with a clear beginning, middle, and end',
-      'case-study': 'Present a detailed case study with problem, solution, and results',
-      motivational: 'Create inspiring and motivational content that encourages action'
+      educational: 'Create educational content that teaches valuable concepts step-by-step. Use clear explanations and actionable insights.',
+      listicle: 'Create a numbered list with actionable tips or insights. Each slide should have a clear list item with practical value.',
+      storytelling: 'Tell a compelling narrative with emotional hooks, relatable characters, and a satisfying conclusion.',
+      'case-study': 'Present a detailed real-world example with clear problem identification, solution implementation, and measurable results.',
+      motivational: 'Create inspiring content that sparks action. Use powerful language, success stories, and empowering calls-to-action.'
     };
 
-    return `
-Create an Instagram carousel about "${topic}" in ${mode} format with exactly ${slideCount} slides.
+    const toneInstructions = {
+      professional: 'Use sophisticated language, industry terminology, and authoritative voice. Focus on credibility and expertise.',
+      casual: 'Use conversational language, contractions, and friendly tone. Make it feel like talking to a friend.',
+      friendly: 'Use warm, approachable language with positive energy. Include encouraging words and supportive messaging.',
+      authoritative: 'Use confident, decisive language with strong statements. Position as an expert with definitive guidance.'
+    };
 
-Requirements:
-- Tone: ${tone}
-- Each slide should be engaging and Instagram-optimized
-- Include relevant emojis for each slide
-- Keep text concise (max 2-3 sentences per slide)
-- Make it visually appealing and shareable
+    const listFormatting = mode === 'listicle' ? `
+- For listicle format, use "isList": true and provide "listItems" array
+- Each list item should be concise and actionable (max 1-2 sentences)
+- Number or bullet the items naturally in the content` : '';
+
+    return `
+Create a high-engagement Instagram carousel about "${topic}" in ${mode} format with exactly ${slideCount} slides.
+
+TONE REQUIREMENTS:
+${toneInstructions[tone]}
+
+CONTENT REQUIREMENTS:
 - ${modeInstructions[mode]}
+- Each slide should be highly engaging and Instagram-optimized
+- Include relevant, eye-catching emojis for each slide
+- Keep text concise but impactful (max 3-4 sentences per slide)
+- Use power words and emotional triggers
+- Make it visually appealing and highly shareable
+- Include relevant hashtags where appropriate${listFormatting}
+
+FORMATTING REQUIREMENTS:
+- For regular content: use "content" field with full text
+- For listicle: use "isList": true and "listItems" array with individual points
+- Include "hashtags" array with 3-5 relevant hashtags per slide (use different categories: niche, broad, trending)
+- Hashtags should be strategic mix of: niche-specific, broad reach, and trending tags
 
 Format your response as JSON with this exact structure:
 {
   "slides": [
     {
       "id": "slide-1",
-      "title": "Slide Title",
-      "content": "Slide content here",
-      "emoji": "📚",
-      "backgroundColor": "#FF6B6B"
+      "title": "Compelling Hook Title",
+      "content": "Engaging content here...",
+      "emoji": "🚀",
+      "backgroundColor": "#FF6B6B",
+      "hashtags": ["#specificniche", "#broaderreach", "#trending"],
+      "isList": false
+    },
+    {
+      "id": "slide-2",
+      "title": "List Title (if applicable)",
+      "content": "Brief intro to the list...",
+      "listItems": ["First actionable tip", "Second valuable insight", "Third practical advice"],
+      "emoji": "📝",
+      "backgroundColor": "#4ECDC4",
+      "hashtags": ["#tips", "#howto", "#productivity"],
+      "isList": true
     }
   ]
 }
 
-Use these background colors in rotation: #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7, #DDA0DD, #98D8C8, #F7DC6F
+BACKGROUND COLORS (use in rotation): #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7, #DDA0DD, #98D8C8, #F7DC6F, #FFB6C1, #87CEEB
 
-Make sure the JSON is valid and properly formatted.
+IMPORTANT: Make sure the JSON is valid and properly formatted. Focus on creating viral-worthy content that stops the scroll!
     `;
   }
 
@@ -109,12 +147,46 @@ Make sure the JSON is valid and properly formatted.
       const jsonString = jsonMatch ? jsonMatch[1] : response;
       
       const parsed = JSON.parse(jsonString);
-      return parsed.slides || [];
+      const slides = parsed.slides || [];
+      
+      // Process each slide to enhance formatting
+      return slides.map((slide: any) => this.enhanceSlideFormatting(slide));
     } catch (error) {
       console.error('Error parsing carousel response:', error);
       // Fallback: create slides from plain text
       return this.createFallbackSlides(response);
     }
+  }
+
+  private enhanceSlideFormatting(slide: any): CarouselSlide {
+    let enhancedContent = slide.content || '';
+
+    // If it's a list slide, format the content with list items
+    if (slide.isList && slide.listItems && Array.isArray(slide.listItems)) {
+      const listContent = slide.listItems
+        .map((item: string, index: number) => `${index + 1}. ${item}`)
+        .join('\n\n');
+      enhancedContent = slide.content ? `${slide.content}\n\n${listContent}` : listContent;
+    }
+
+    // Add hashtags to content if they exist
+    if (slide.hashtags && Array.isArray(slide.hashtags) && slide.hashtags.length > 0) {
+      const hashtagString = slide.hashtags.join(' ');
+      enhancedContent = `${enhancedContent}\n\n${hashtagString}`;
+    }
+
+    return {
+      id: slide.id || `slide-${Date.now()}`,
+      title: slide.title || '',
+      content: enhancedContent,
+      emoji: slide.emoji || '✨',
+      backgroundColor: slide.backgroundColor || '#FF6B6B',
+      hashtags: slide.hashtags || [],
+      isList: slide.isList || false,
+      listItems: slide.listItems || [],
+      textAlign: slide.isList ? 'left' : 'center',
+      titleAlign: 'center'
+    };
   }
 
   private createFallbackSlides(text: string): CarouselSlide[] {
@@ -141,9 +213,11 @@ Optimize this Instagram carousel headline for maximum engagement: "${headline}"
 Requirements:
 - Make it more compelling and click-worthy
 - Keep it under 125 characters
-- Use power words and emotional triggers
-- Make it Instagram-friendly
+- Use power words and emotional triggers (Transform, Discover, Master, Unlock, Proven, Secret, Ultimate)
+- Add emotional hooks (urgency, curiosity, benefit)
+- Make it Instagram-friendly with emojis where appropriate
 - Maintain the original meaning
+- Focus on benefits and outcomes
 
 Return only the optimized headline, nothing else.
     `;
@@ -155,6 +229,33 @@ Return only the optimized headline, nothing else.
     } catch (error) {
       console.error('Error optimizing headline:', error);
       return headline;
+    }
+  }
+
+  async enhanceSlideContent(content: string, tone: string): Promise<string> {
+    const prompt = `
+Enhance this slide content for maximum Instagram engagement: "${content}"
+
+Tone: ${tone}
+Requirements:
+- Make it more engaging and action-oriented
+- Keep it concise but impactful (max 3-4 sentences)
+- Add relevant emojis naturally
+- Use power words and emotional triggers
+- Include a subtle call-to-action if appropriate
+- Make it shareable and relatable
+- Maintain the core message
+
+Return only the enhanced content, nothing else.
+    `;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text().trim();
+    } catch (error) {
+      console.error('Error enhancing content:', error);
+      return content;
     }
   }
 }

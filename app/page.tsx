@@ -4,27 +4,44 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Instagram, Sparkles, Zap, Crown, Wand2, Edit3, Brain, Palette, Camera } from 'lucide-react';
 import CarouselGenerator from '@/components/CarouselGenerator';
-import CarouselEditor from '@/components/CarouselEditor';
 import ManualSlideCreator from '@/components/ManualSlideCreator';
 import TemplatesPage from '@/components/TemplatesPage';
 import ProfessionalPage from '@/components/ProfessionalPage';
 import { CarouselSlide } from '@/lib/gemini';
+import { useCarouselStore } from '@/lib/carousel-store';
 
 type CreationMode = 'ai' | 'manual' | 'edit' | 'templates' | 'professional';
 
 export default function Home() {
-  const [slides, setSlides] = useState<CarouselSlide[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [creationMode, setCreationMode] = useState<CreationMode>('ai');
+  
+  // Get Zustand store methods
+  const { slides, setSlides } = useCarouselStore();
 
   const handleGenerate = (newSlides: CarouselSlide[]) => {
+    console.log('Template selected:', newSlides.length, 'slides');
+    console.log('First slide:', newSlides[0]);
+    
+    // Set slides in Zustand store so editor can access them
     setSlides(newSlides);
-    setCreationMode('edit');
+    
+    // Use router.push instead of window.location for better state preservation
+    setTimeout(() => {
+      window.location.href = '/editor';
+    }, 150);
   };
 
   const handleManualCreate = (newSlides: CarouselSlide[]) => {
+    console.log('Manual slides created:', newSlides.length, 'slides');
+    
+    // Set slides in Zustand store so editor can access them
     setSlides(newSlides);
-    setCreationMode('edit');
+    
+    // Use router.push instead of window.location for better state preservation
+    setTimeout(() => {
+      window.location.href = '/editor';
+    }, 150);
   };
 
   return (
@@ -167,7 +184,7 @@ export default function Home() {
               </button>
               
               <button
-                onClick={() => setCreationMode('edit')}
+                onClick={() => slides.length > 0 && (window.location.href = '/editor')}
                 disabled={slides.length === 0}
                 className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                   creationMode === 'edit'
@@ -216,14 +233,6 @@ export default function Home() {
           {creationMode === 'manual' && (
             <ManualSlideCreator
               onCreateSlides={handleManualCreate}
-            />
-          )}
-          
-          {creationMode === 'edit' && (
-            <CarouselEditor
-              slides={slides}
-              onSlidesChange={setSlides}
-              isGenerating={isGenerating}
             />
           )}
         </motion.div>
@@ -362,6 +371,12 @@ export default function Home() {
               className="px-8 py-4 bg-white/20 text-white font-semibold rounded-xl hover:bg-white/30 transition-colors border border-white/30"
             >
               Create Manually
+            </button>
+            <button 
+              onClick={() => window.location.href = '/editor'}
+              className="px-8 py-4 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors border border-white/30"
+            >
+              Go to Editor
             </button>
           </div>
         </motion.div>
