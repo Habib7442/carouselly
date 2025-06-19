@@ -354,65 +354,24 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 80; // More generous padding for better look
     const canvasWidth = 1080;
     const canvasHeight = 1080;
-    const contentWidth = canvasWidth - (padding * 2);
-    
-    // Calculate total content height for perfect vertical centering
-    let totalContentHeight = 0;
-    let emojiHeight = 0;
-    let titleHeight = 0;
-    let contentHeight = 0;
-    let hashtagHeight = 0;
     
     const emojiSize = 80;
     const titleFontSize = 52;
     const contentFontSize = 32;
-    const spacing = 40; // Consistent spacing between elements
     
-    // Calculate emoji height
+    // Split content and hashtags
+    const { mainContent, hashtags } = splitContentAndHashtags(slide.content || '');
+    
+    // EMOJI - Use position controls or default
     if (slide.emoji) {
-      emojiHeight = emojiSize + spacing;
-    }
-    
-    // Calculate title height
-    if (slide.title) {
-      const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      titleHeight = (titleLines.length * titleFontSize * 1.2) + spacing;
-    }
-    
-    // Calculate content height
-    let mainContent = '';
-    let hashtagsPart = '';
-    if (slide.content) {
-      const { mainContent: main, hashtags } = splitContentAndHashtags(slide.content);
-      mainContent = main;
-      hashtagsPart = hashtags;
+      const emojiX = (parseFloat(slide.emojiPositionX || '50') / 100) * canvasWidth;
+      const emojiY = (parseFloat(slide.emojiPositionY || '20') / 100) * canvasHeight;
       
-      if (mainContent) {
-        const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-        contentHeight = (contentLines.length * contentFontSize * 1.3) + spacing;
-      }
-      
-      if (hashtagsPart) {
-        const hashtagLines = wrapText(hashtagsPart, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-        hashtagHeight = hashtagLines.length * contentFontSize * 1.3;
-      }
-    }
-    
-    // Calculate total height and starting Y position for perfect centering
-    totalContentHeight = emojiHeight + titleHeight + contentHeight + hashtagHeight;
-    const centerY = canvasHeight / 2;
-    const startY = centerY - (totalContentHeight / 2);
-    
-    let currentY = startY;
-    
-    // EMOJI - Perfectly centered at the top
-    if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
-        left: canvasWidth / 2,
-        top: currentY + (emojiSize / 2),
+        left: emojiX,
+        top: emojiY,
         fontSize: emojiSize,
         textAlign: 'center',
         originX: 'center',
@@ -426,26 +385,24 @@ function EditorPageContent() {
         })
       });
       canvas.add(emoji);
-      currentY += emojiHeight;
     }
 
-    // TITLE - Perfectly centered below emoji
+    // TITLE - Use position controls or default
     if (slide.title) {
-      const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      const titleLineHeight = titleFontSize * 1.2;
+      const titleX = (parseFloat(slide.titlePositionX || '50') / 100) * canvasWidth;
+      const titleY = (parseFloat(slide.titlePositionY || '40') / 100) * canvasHeight;
       
-      // Center the title block
-      const titleBlockHeight = titleLines.length * titleLineHeight;
-      const titleY = currentY + (titleBlockHeight / 2) - (titleLineHeight / 2);
+      const titleLines = wrapText(slide.title, 900, titleFontSize, slide.titleFontFamily || 'Inter');
+      const titleLineHeight = titleFontSize * 1.2;
       
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
-          left: canvasWidth / 2,
+          left: titleX,
           top: titleY + (index * titleLineHeight),
           fontSize: titleFontSize,
           fontFamily: slide.titleFontFamily || 'Inter',
           fill: slide.titleColor || '#FFFFFF',
-          textAlign: 'center',
+          textAlign: slide.titleAlign || 'center',
           originX: 'center',
           originY: 'center',
           fontWeight: 'bold',
@@ -459,26 +416,24 @@ function EditorPageContent() {
         });
         canvas.add(title);
       });
-      currentY += titleHeight;
     }
 
-    // CONTENT - Perfectly centered below title
+    // CONTENT - Use position controls or default
     if (mainContent) {
-      const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-      const contentLineHeight = contentFontSize * 1.3;
+      const contentX = (parseFloat(slide.contentPositionX || '50') / 100) * canvasWidth;
+      const contentY = (parseFloat(slide.contentPositionY || '60') / 100) * canvasHeight;
       
-      // Center the content block
-      const contentBlockHeight = contentLines.length * contentLineHeight;
-      const contentY = currentY + (contentBlockHeight / 2) - (contentLineHeight / 2);
+      const contentLines = wrapText(mainContent, 900, contentFontSize, slide.contentFontFamily || 'Inter');
+      const contentLineHeight = contentFontSize * 1.3;
       
       contentLines.forEach((line, index) => {
         const content = new FabricText(line, {
-          left: canvasWidth / 2,
+          left: contentX,
           top: contentY + (index * contentLineHeight),
           fontSize: contentFontSize,
           fontFamily: slide.contentFontFamily || 'Inter',
           fill: slide.contentColor || '#FFFFFF',
-          textAlign: 'center',
+          textAlign: slide.contentAlign || 'center',
           originX: 'center',
           originY: 'center',
           selectable: false,
@@ -491,44 +446,38 @@ function EditorPageContent() {
         });
         canvas.add(content);
       });
-      currentY += contentHeight;
     }
     
-    // HASHTAGS - Perfectly centered below content
-    if (hashtagsPart) {
-      const hashtagLines = wrapText(hashtagsPart, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-      const hashtagLineHeight = contentFontSize * 1.3;
-      
-      // Center the hashtag block
-      const hashtagBlockHeight = hashtagLines.length * hashtagLineHeight;
-      const hashtagY = currentY + (hashtagBlockHeight / 2) - (hashtagLineHeight / 2);
-      
-      hashtagLines.forEach((line, index) => {
-        const hashtagText = new FabricText(line, {
-          left: canvasWidth / 2,
-          top: hashtagY + (index * hashtagLineHeight),
-          fontSize: contentFontSize,
-          fontFamily: slide.contentFontFamily || 'Inter',
-          fill: '#000000', // Black color for hashtags
-          fontWeight: 'bold',
-          textAlign: 'center',
-          originX: 'center',
-          originY: 'center',
-          selectable: false,
-          shadow: new Shadow({
-            color: 'rgba(255,255,255,0.8)',
-            blur: 4,
-            offsetX: 0,
-            offsetY: 1
-          })
-        });
-        canvas.add(hashtagText);
+    // HASHTAGS - Always at bottom center
+    if (hashtags) {
+      const hashtagText = new FabricText(hashtags, {
+        left: canvasWidth / 2,
+        top: canvasHeight - 80,
+        fontSize: 24,
+        fontFamily: slide.contentFontFamily || 'Inter',
+        fill: '#000000',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        shadow: new Shadow({
+          color: 'rgba(255,255,255,0.8)',
+          blur: 4,
+          offsetX: 0,
+          offsetY: 1
+        })
       });
+      canvas.add(hashtagText);
     }
   };
 
   const downloadCanvas = (canvas: Canvas, filename: string) => {
-    const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
+    const dataURL = canvas.toDataURL({ 
+      format: 'png', 
+      multiplier: 2, // 2x resolution for HD quality
+      quality: 1 
+    });
     const link = document.createElement('a');
     link.download = `${filename}.png`;
     link.href = dataURL;
@@ -626,7 +575,11 @@ function EditorPageContent() {
         
         addTextToCanvas(canvas, slide);
         
-        const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
+        const dataURL = canvas.toDataURL({ 
+          format: 'png', 
+          multiplier: 2, // 2x resolution for HD quality
+          quality: 1 
+        });
         const base64Data = dataURL.split(',')[1];
         const binaryData = atob(base64Data);
         const bytes = new Uint8Array(binaryData.length);
@@ -771,8 +724,8 @@ function EditorPageContent() {
     
     // Render title
     if (slide.title) {
-      const titleX = (parseFloat(slide.textPositionX || '50') / 100) * 1080;
-      const titleY = (parseFloat(slide.textPositionY || '40') / 100) * 1080;
+      const titleX = (parseFloat(slide.titlePositionX || '50') / 100) * 1080;
+      const titleY = (parseFloat(slide.titlePositionY || '40') / 100) * 1080;
       
       ctx.font = `bold 48px ${slide.titleFontFamily || 'Inter'}`;
       ctx.fillStyle = slide.titleColor || '#FFFFFF';
@@ -819,8 +772,8 @@ function EditorPageContent() {
       const { mainContent, hashtags } = splitContentAndHashtags(slide.content);
       
       if (mainContent) {
-        const contentX = (parseFloat(slide.textPositionX || '50') / 100) * 1080;
-        const contentY = (parseFloat(slide.textPositionY || '60') / 100) * 1080;
+        const contentX = (parseFloat(slide.contentPositionX || '50') / 100) * 1080;
+        const contentY = (parseFloat(slide.contentPositionY || '60') / 100) * 1080;
         
         ctx.font = `32px ${slide.contentFontFamily || 'Inter'}`;
         ctx.fillStyle = slide.contentColor || '#FFFFFF';
