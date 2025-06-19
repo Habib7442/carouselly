@@ -201,60 +201,72 @@ const cinemaChicTemplate: CarouselSlide[] = [
     title: 'Cinema Chic Collection',
     content: 'Classic Hollywood vintage style with timeless elegance and film reel accents.',
     emoji: '🎬',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'cinema-2',
     title: 'Golden Era Glamour',
     content: 'Inspired by the sophistication of 1940s Hollywood with modern cinematic flair.',
     emoji: '🎭',
-    backgroundColor: '#2d1810',
+    backgroundColor: `linear-gradient(135deg, #2d1810 0%, #8b6f47 50%, #2d1810 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #2d1810 0%, #8b6f47 50%, #2d1810 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'cinema-3',
     title: 'Film Noir Vibes',
     content: 'Dramatic shadows and vintage aesthetics create that perfect cinematic atmosphere.',
     emoji: '🎞️',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 30%, #1a1a1a 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 30%, #1a1a1a 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'cinema-4',
     title: 'Vintage Spotlight',
     content: 'Classic film techniques meet modern storytelling in this elegant design collection.',
     emoji: '🎪',
-    backgroundColor: '#4a3728',
+    backgroundColor: `linear-gradient(135deg, #4a3728 0%, #d4af37 50%, #4a3728 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #4a3728 0%, #d4af37 50%, #4a3728 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'cinema-5',
     title: 'Reel Magic',
     content: 'Every frame tells a story. Capture the essence of classic cinema in your content.',
     emoji: '📽️',
-    backgroundColor: '#2c2c2c',
+    backgroundColor: `linear-gradient(135deg, #2c2c2c 0%, #8b8680 50%, #2c2c2c 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #2c2c2c 0%, #8b8680 50%, #2c2c2c 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'cinema-6',
     title: 'Follow for More!',
     content: 'Join our vintage cinema community for daily classic Hollywood inspiration.',
     emoji: '⭐',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `linear-gradient(135deg, #1a1a1a 0%, #d4af37 25%, #1a1a1a 75%, #d4af37 100%)`,
     backgroundType: 'gradient',
     gradient: `linear-gradient(135deg, #1a1a1a 0%, #d4af37 25%, #1a1a1a 75%, #d4af37 100%)`,
-    template: 'cinema-chic'
+    template: 'cinema-chic',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   }
 ];
 

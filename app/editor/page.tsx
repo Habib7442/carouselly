@@ -278,8 +278,8 @@ function EditorPageContent() {
               selectable: false
             });
             
-            // Apply photoshoot template filters if it's a photoshoot template
-            if (slide.template === 'photoshoot') {
+            // Apply template filters for cinematic templates
+            if (slide.template === 'photoshoot' || slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
               fabricImg.filters = [
                 new filters.Brightness({ brightness: -0.4 }),
                 new filters.Contrast({ contrast: 0.3 }),
@@ -929,8 +929,8 @@ function EditorPageContent() {
         
         ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
         
-        // Apply photoshoot template effects if needed
-        if (slide.template === 'photoshoot') {
+        // Apply template effects for cinematic templates
+        if (slide.template === 'photoshoot' || slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
           ctx.globalCompositeOperation = 'multiply';
           ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
           ctx.fillRect(0, 0, 1080, 1080);

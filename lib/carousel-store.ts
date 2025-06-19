@@ -46,12 +46,13 @@ const getStorageSize = (obj: any): number => {
 const simplifySlideForStorage = (slide: CarouselSlide): CarouselSlide => {
   let simplifiedSlide = { ...slide };
 
-  // Handle photoshoot template gradients
-  if (slide.template === 'photoshoot' && slide.backgroundColor && slide.backgroundColor.includes('radial-gradient')) {
+  // Handle complex template gradients
+  if ((slide.template === 'photoshoot' || slide.template === 'cinema-chic' || slide.template === 'instagram-user') && 
+      slide.backgroundColor && slide.backgroundColor.includes('radial-gradient')) {
     simplifiedSlide = {
       ...simplifiedSlide,
       backgroundColor: '#1a1a1a', // Simple dark background as fallback
-      _originalBackground: 'photoshoot-gradient' // Flag to restore complex gradient
+      _originalBackground: `${slide.template}-gradient` // Flag to restore complex gradient
     };
   }
 
@@ -71,8 +72,8 @@ const simplifySlideForStorage = (slide: CarouselSlide): CarouselSlide => {
 const restoreSlideFromStorage = (slide: CarouselSlide): CarouselSlide => {
   let restoredSlide = { ...slide };
 
-  // Restore photoshoot gradients
-  if (slide._originalBackground === 'photoshoot-gradient') {
+  // Restore template gradients
+  if (slide._originalBackground && slide._originalBackground.includes('-gradient')) {
     const gradients: { [key: string]: string } = {
       'photoshoot-1': `
         radial-gradient(circle at 45% 35%, rgba(255, 165, 0, 0.15) 0%, transparent 35%),
@@ -109,6 +110,44 @@ const restoreSlideFromStorage = (slide: CarouselSlide): CarouselSlide => {
         radial-gradient(ellipse at 54% 64%, rgba(218, 165, 32, 0.07) 0%, transparent 34%),
         radial-gradient(circle at center, rgba(139, 69, 19, 0.05) 24%, rgba(22, 18, 22, 0.96) 49%, rgba(0, 0, 0, 1) 100%),
         linear-gradient(105deg, rgba(8, 5, 8, 0.84) 0%, rgba(0, 0, 0, 0.98) 100%)
+      `,
+      // Cinema Chic gradients
+      'cinema-chic-1': `linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)`,
+      'cinema-chic-2': `linear-gradient(135deg, #2d1810 0%, #8b6f47 50%, #2d1810 100%)`,
+      'cinema-chic-3': `linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 30%, #1a1a1a 100%)`,
+      'cinema-chic-4': `linear-gradient(135deg, #4a3728 0%, #d4af37 50%, #4a3728 100%)`,
+      'cinema-chic-5': `linear-gradient(135deg, #2c2c2c 0%, #8b8680 50%, #2c2c2c 100%)`,
+      'cinema-chic-6': `linear-gradient(135deg, #1a1a1a 0%, #d4af37 25%, #1a1a1a 75%, #d4af37 100%)`,
+      // Instagram User gradients  
+      'instagram-user-1': `
+        radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(25, 25, 25, 0.9) 50%, rgba(0, 0, 0, 1) 100%)
+      `,
+      'instagram-user-2': `
+        radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 60% 70%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%)
+      `,
+      'instagram-user-3': `
+        radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+        linear-gradient(60deg, rgba(139, 69, 19, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%)
+      `,
+      'instagram-user-4': `
+        radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(75, 0, 130, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)
+      `,
+      'instagram-user-5': `
+        radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 30, 0.95) 100%)
+      `,
+      'instagram-user-6': `
+        radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
+        radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 1) 100%)
       `
     };
     
