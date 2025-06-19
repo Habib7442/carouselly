@@ -232,10 +232,28 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                 return;
               }
               
-              // Configure image to fill canvas properly
+              // Configure image to fill canvas properly based on selected fit mode
               const scaleX = 1080 / (img.width || 1);
               const scaleY = 1080 / (img.height || 1);
-              const scale = Math.max(scaleX, scaleY);
+              
+              // Use the appropriate scaling based on the selected fit mode
+              let scale;
+              if (slide.backgroundImageFit === 'contain') {
+                // Contain: Ensure the entire image is visible within the canvas
+                scale = Math.min(scaleX, scaleY);
+              } else if (slide.backgroundImageFit === 'fill') {
+                // Fill: Stretch the image to fill the canvas completely
+                img.set({
+                  width: 1080,
+                  height: 1080,
+                  scaleX: 1,
+                  scaleY: 1
+                });
+                scale = 1;
+              } else {
+                // Cover: Ensure the canvas is completely covered by the image
+                scale = Math.max(scaleX, scaleY);
+              }
               
               img.set({
                 left: 540,
@@ -358,8 +376,10 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
         }
         
         // Use user's position settings for download
-        const titlePosX = getTitlePositionX(slide);
-        const titlePosY = getTitlePositionY(slide);
+        const titlePosX = slide.titlePositionX ? parseInt(slide.titlePositionX) : getTitlePositionX(slide);
+        const titlePosY = slide.titlePositionY ? parseInt(slide.titlePositionY) : getTitlePositionY(slide);
+        const contentPosX = slide.contentPositionX ? parseInt(slide.contentPositionX) : getTitlePositionX(slide);
+        const contentPosY = slide.contentPositionY ? parseInt(slide.contentPositionY) : getTitlePositionY(slide);
         const maxTextWidth = 650; // Leave 215px padding on each side to better match preview spacing
         
         // Calculate responsive font sizes based on content length
@@ -425,16 +445,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
           canvas.add(titleText);
         }
         
-        // Add content with user positioning (below title)
+        // Add content with user positioning
         if (slide.content) {
           // Truncate content if too long to ensure it fits
           const truncatedContent = slide.content.length > 200 ? slide.content.substring(0, 197) + '...' : slide.content;
           
-          const contentY = positionY + (titleFontSize * 1.5); // Content below title
+          // Convert percentage to pixel positions for 1080x1080 canvas
+          const contentPositionX = (contentPosX * 1080) / 100;
+          const contentPositionY = (contentPosY * 1080) / 100;
           
           const contentText = new FabricText(truncatedContent, {
-            left: positionX,
-            top: contentY,
+            left: contentPositionX,
+            top: contentPositionY,
             fontSize: contentFontSize,
             fill: slide.textColor || '#FFFFFF',
             fontFamily: 'Arial',
@@ -516,10 +538,28 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                     return;
                   }
                   
-                  // Configure image to fill canvas
+                  // Configure image to fill canvas based on selected fit mode
                   const scaleX = 1080 / (img.width || 1);
                   const scaleY = 1080 / (img.height || 1);
-                  const scale = Math.max(scaleX, scaleY);
+                  
+                  // Use the appropriate scaling based on the selected fit mode
+                  let scale;
+                  if (slide.backgroundImageFit === 'contain') {
+                    // Contain: Ensure the entire image is visible within the canvas
+                    scale = Math.min(scaleX, scaleY);
+                  } else if (slide.backgroundImageFit === 'fill') {
+                    // Fill: Stretch the image to fill the canvas completely
+                    img.set({
+                      width: 1080,
+                      height: 1080,
+                      scaleX: 1,
+                      scaleY: 1
+                    });
+                    scale = 1;
+                  } else {
+                    // Cover: Ensure the canvas is completely covered by the image
+                    scale = Math.max(scaleX, scaleY);
+                  }
                   
                   img.set({
                     left: 540,
@@ -1064,9 +1104,9 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                       {slidesWithColors[currentSlide]?.template === 'instagram-user' && (
                         <>
                           {/* Primary Spotlight */}
-                          <div 
-                            className="absolute inset-0"
-                            style={{
+                        <div 
+                          className="absolute inset-0"
+                          style={{
                               background: `
                                 radial-gradient(ellipse 250px 400px at 50% 25%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 215, 0, 0.1) 30%, transparent 70%),
                                 radial-gradient(circle 200px at 30% 70%, rgba(255, 20, 147, 0.15) 0%, transparent 60%),
@@ -1188,14 +1228,14 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                               mixBlendMode: 'overlay'
                             }}
                           />
-                        </>
-                      )}
+                    </>
+                  )}
 
                       {/* User-Selected Overlay - For NON-Photoshoot, NON-Instagram-User, and NON-Cinema-Chic Templates */}
                       {slidesWithColors[currentSlide]?.template !== 'photoshoot' && slidesWithColors[currentSlide]?.template !== 'instagram-user' && slidesWithColors[currentSlide]?.template !== 'cinema-chic' && (
-                        <div 
+                  <div 
                           className="absolute inset-0"
-                          style={{
+                    style={{
                             background: slidesWithColors[currentSlide]?.gradient || slidesWithColors[currentSlide]?.backgroundColor || 'rgba(0, 0, 0, 0.3)',
                             opacity: 0.6
                           }}
@@ -1295,7 +1335,7 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                                   slide.template === 'cinema-chic' ? 0.7 :
                                   (slide.backgroundImageOpacity || 0.6),
                           filter: slide.template === 'photoshoot' 
-                            ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)'
+                            ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)' 
                             : slide.template === 'instagram-user'
                             ? 'brightness(0.7) contrast(1.3) saturate(1.2) sepia(0.1) hue-rotate(10deg)'
                             : slide.template === 'cinema-chic'
@@ -1665,10 +1705,10 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                 Typography
               </h3>
               <div className="space-y-6">
-                {/* Text Position Control - Move to Top */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                {/* Title Position Control */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
                   <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
-                    📍 Text Position Control
+                    📍 Title Position Control
                   </h4>
                   <div className="space-y-4">
                     <div>
@@ -1678,18 +1718,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                           type="range"
                           min="0"
                           max="100"
-                          value={parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
+                          value={parseInt((slidesWithColors[currentSlide]?.titlePositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
                           onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
-                            textPositionX: `${e.target.value}%`,
-                            textPositionY: slidesWithColors[currentSlide]?.textPositionY || '50%'
+                            titlePositionX: `${e.target.value}%`,
+                            titlePositionY: slidesWithColors[currentSlide]?.titlePositionY || slidesWithColors[currentSlide]?.textPositionY || '50%'
                           })}
                           className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
                           style={{
-                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.titlePositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.titlePositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb 100%)`
                           }}
                         />
                         <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
-                          {slidesWithColors[currentSlide]?.textPositionX || '50%'}
+                          {slidesWithColors[currentSlide]?.titlePositionX || slidesWithColors[currentSlide]?.textPositionX || '50%'}
                         </div>
                       </div>
                     </div>
@@ -1701,30 +1741,94 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                           type="range"
                           min="0"
                           max="100"
-                          value={parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
+                          value={parseInt((slidesWithColors[currentSlide]?.titlePositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
                           onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
-                            textPositionY: `${e.target.value}%`,
-                            textPositionX: slidesWithColors[currentSlide]?.textPositionX || '50%'
+                            titlePositionY: `${e.target.value}%`,
+                            titlePositionX: slidesWithColors[currentSlide]?.titlePositionX || slidesWithColors[currentSlide]?.textPositionX || '50%'
                           })}
                           className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
                           style={{
-                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.titlePositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.titlePositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb 100%)`
                           }}
                         />
                         <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
-                          {slidesWithColors[currentSlide]?.textPositionY || '50%'}
+                          {slidesWithColors[currentSlide]?.titlePositionY || slidesWithColors[currentSlide]?.textPositionY || '50%'}
                         </div>
                       </div>
                     </div>
 
                     <button
                       onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
-                        textPositionX: '50%',
-                        textPositionY: '50%'
+                        titlePositionX: '50%',
+                        titlePositionY: '50%'
                       })}
                       className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
                     >
-                      Reset to Center
+                      Reset Title to Center
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content Position Control */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                    📍 Content Position Control
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-purple-700 mb-2">Horizontal Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={parseInt((slidesWithColors[currentSlide]?.contentPositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            contentPositionX: `${e.target.value}%`,
+                            contentPositionY: slidesWithColors[currentSlide]?.contentPositionY || slidesWithColors[currentSlide]?.textPositionY || '50%'
+                          })}
+                          className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                          style={{
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.contentPositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.contentPositionX || slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                          {slidesWithColors[currentSlide]?.contentPositionX || slidesWithColors[currentSlide]?.textPositionX || '50%'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-purple-700 mb-2">Vertical Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={parseInt((slidesWithColors[currentSlide]?.contentPositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            contentPositionY: `${e.target.value}%`,
+                            contentPositionX: slidesWithColors[currentSlide]?.contentPositionX || slidesWithColors[currentSlide]?.textPositionX || '50%'
+                          })}
+                          className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                          style={{
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.contentPositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.contentPositionY || slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                          {slidesWithColors[currentSlide]?.contentPositionY || slidesWithColors[currentSlide]?.textPositionY || '50%'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
+                        contentPositionX: '50%',
+                        contentPositionY: '50%'
+                      })}
+                      className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    >
+                      Reset Content to Center
                     </button>
                   </div>
                 </div>
@@ -1889,6 +1993,74 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                           {option.name}
                         </button>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {slidesWithColors[currentSlide]?.backgroundImage && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                    <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                      🖼️ Background Image Position
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 mb-2">Horizontal Position</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={parseInt((slidesWithColors[currentSlide]?.backgroundImageX || '50').replace('%', ''))}
+                            onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                              backgroundImageX: `${e.target.value}%`,
+                              backgroundImageY: slidesWithColors[currentSlide]?.backgroundImageY || '50%',
+                              backgroundImagePosition: undefined
+                            })}
+                            className="flex-1 h-3 bg-green-200 rounded-lg appearance-none cursor-pointer slider-green"
+                            style={{
+                              background: `linear-gradient(to right, #10b981 0%, #10b981 ${parseInt((slidesWithColors[currentSlide]?.backgroundImageX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.backgroundImageX || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <div className="text-sm font-medium text-green-700 min-w-[3rem] text-center bg-green-100 px-2 py-1 rounded">
+                            {slidesWithColors[currentSlide]?.backgroundImageX || '50%'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-green-700 mb-2">Vertical Position</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={parseInt((slidesWithColors[currentSlide]?.backgroundImageY || '50').replace('%', ''))}
+                            onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                              backgroundImageY: `${e.target.value}%`,
+                              backgroundImageX: slidesWithColors[currentSlide]?.backgroundImageX || '50%',
+                              backgroundImagePosition: undefined
+                            })}
+                            className="flex-1 h-3 bg-green-200 rounded-lg appearance-none cursor-pointer slider-green"
+                            style={{
+                              background: `linear-gradient(to right, #10b981 0%, #10b981 ${parseInt((slidesWithColors[currentSlide]?.backgroundImageY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.backgroundImageY || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <div className="text-sm font-medium text-green-700 min-w-[3rem] text-center bg-green-100 px-2 py-1 rounded">
+                            {slidesWithColors[currentSlide]?.backgroundImageY || '50%'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
+                          backgroundImageX: '50%',
+                          backgroundImageY: '50%',
+                          backgroundImagePosition: 'center'
+                        })}
+                        className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                      >
+                        Reset to Center
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2127,29 +2299,171 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
           <div className="bg-white rounded-lg p-6 shadow-sm border">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Edit3 className="h-5 w-5 text-blue-600" />
-              Content Editor
+              Content & Typography
             </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={slidesWithColors[currentSlide]?.title || ''}
-                  onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { title: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter slide title..."
-                />
+            <div className="space-y-6">
+              {/* Text Position Control */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                  📍 Text Position Control
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">Horizontal Position</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
+                        onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                          textPositionX: `${e.target.value}%`,
+                          textPositionY: slidesWithColors[currentSlide]?.textPositionY || '50%'
+                        })}
+                        className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                        style={{
+                          background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                        }}
+                      />
+                      <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                        {slidesWithColors[currentSlide]?.textPositionX || '50%'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">Vertical Position</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
+                        onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                          textPositionY: `${e.target.value}%`,
+                          textPositionX: slidesWithColors[currentSlide]?.textPositionX || '50%'
+                        })}
+                        className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                        style={{
+                          background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                        }}
+                      />
+                      <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                        {slidesWithColors[currentSlide]?.textPositionY || '50%'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
+                      textPositionX: '50%',
+                      textPositionY: '50%'
+                    })}
+                    className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                  >
+                    Reset to Center
+                  </button>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                <textarea
-                  value={slidesWithColors[currentSlide]?.content || ''}
-                  onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { content: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  rows={4}
-                  placeholder="Enter slide content..."
-                />
+
+              {/* Content Text Editing */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={slidesWithColors[currentSlide]?.title || ''}
+                    onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { title: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter slide title..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                  <textarea
+                    value={slidesWithColors[currentSlide]?.content || ''}
+                    onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { content: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    rows={4}
+                    placeholder="Enter slide content..."
+                  />
+                </div>
+              </div>
+
+              {/* Text Alignment Controls */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title Alignment</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { titleAlign: 'left' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        slidesWithColors[currentSlide]?.titleAlign === 'left'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Left
+                    </button>
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { titleAlign: 'center' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        (slidesWithColors[currentSlide]?.titleAlign || 'center') === 'center'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Center
+                    </button>
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { titleAlign: 'right' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        slidesWithColors[currentSlide]?.titleAlign === 'right'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Right
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content Alignment</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { textAlign: 'left' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        slidesWithColors[currentSlide]?.textAlign === 'left'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Left
+                    </button>
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { textAlign: 'center' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        (slidesWithColors[currentSlide]?.textAlign || 'center') === 'center'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Center
+                    </button>
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { textAlign: 'right' })}
+                      className={`p-2 rounded-lg border-2 transition-colors text-sm ${
+                        slidesWithColors[currentSlide]?.textAlign === 'right'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Right
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
