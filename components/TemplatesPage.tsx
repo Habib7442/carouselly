@@ -201,12 +201,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Spotlight Starlet',
     content: 'Bold layouts with dramatic lighting effects to highlight key moments and create stunning visual impact.',
     emoji: '✨',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
       linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(25, 25, 25, 0.9) 50%, rgba(0, 0, 0, 1) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   },
   {
@@ -214,12 +215,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Behind the Scenes',
     content: 'Share your authentic moments with cinematic flair and professional polish.',
     emoji: '🎬',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 60% 70%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
       linear-gradient(45deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   },
   {
@@ -227,12 +229,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Golden Hour Magic',
     content: 'Capture the perfect lighting with warm tones and dramatic shadows.',
     emoji: '🌅',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.3) 0%, transparent 60%),
       radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
       linear-gradient(60deg, rgba(139, 69, 19, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   },
   {
@@ -240,12 +243,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Mood & Vibes',
     content: 'Express your personality with bold colors and striking visual elements.',
     emoji: '💫',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
       linear-gradient(135deg, rgba(75, 0, 130, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   },
   {
@@ -253,12 +257,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Signature Style',
     content: 'Develop your unique aesthetic with consistent visual branding.',
     emoji: '🎨',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
       linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 30, 0.95) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   },
   {
@@ -266,12 +271,13 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Follow My Journey',
     content: 'Join me for more stunning content and behind-the-scenes moments.',
     emoji: '⭐',
-    backgroundColor: `
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `
       radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
       radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
       linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 1) 100%)
     `,
-    backgroundType: 'gradient',
     template: 'instagram-user'
   }
 ];
@@ -333,12 +339,41 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
   };
 
   const applyTemplate = (template: CarouselSlide[]) => {
-    // Apply any uploaded images to the template
+    // Apply any uploaded images to the template and ensure all properties are preserved
     const updatedTemplate = template.map(slide => ({
       ...slide,
-      backgroundImage: selectedImages[slide.id] || undefined
+      backgroundImage: selectedImages[slide.id] || undefined,
+      // Ensure gradient and backgroundType are preserved
+      backgroundType: slide.backgroundType || 'color',
+      gradient: slide.gradient || undefined,
+      // Set default colors for text
+      titleColor: slide.titleColor || '#FFFFFF',
+      contentColor: slide.contentColor || '#FFFFFF',
+      titleAlign: slide.titleAlign || 'center',
+      contentAlign: slide.contentAlign || 'center'
     }));
+    
+    console.log('Applying template:', updatedTemplate);
     onSelectTemplate(updatedTemplate);
+  };
+
+  const getSlideStyle = (slide: CarouselSlide) => {
+    const baseStyle: React.CSSProperties = {
+      backgroundColor: slide.backgroundColor || '#1a1a1a',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    };
+
+    if (slide.backgroundType === 'gradient' && slide.gradient) {
+      baseStyle.background = slide.gradient;
+    } else if (slide.backgroundType === 'image' && slide.backgroundImage) {
+      baseStyle.backgroundImage = `url(${slide.backgroundImage})`;
+      baseStyle.backgroundSize = slide.imageFit || 'cover';
+      baseStyle.backgroundPosition = slide.imagePosition || 'center';
+    }
+
+    return baseStyle;
   };
 
   return (
@@ -472,9 +507,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                   <div className="relative">
                     <div 
                       className="w-full aspect-square max-w-sm mx-auto relative overflow-hidden rounded-2xl shadow-lg"
-                      style={{ 
-                        background: previewSlide.backgroundColor 
-                      }}
+                      style={getSlideStyle(previewSlide)}
                     >
                       {selectedImages[previewSlide.id] && (
                         <>
@@ -641,11 +674,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                     >
                       <div 
                         className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-                        style={{ 
-                          background: slide.backgroundType === 'gradient' 
-                            ? slide.backgroundColor 
-                            : slide.backgroundColor
-                        }}
+                        style={getSlideStyle(slide)}
                       >
                         {slide.emoji}
                       </div>
