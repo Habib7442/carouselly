@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
 
 export interface CarouselSlide {
   id: string;
@@ -34,6 +34,11 @@ export interface CarouselSlide {
   hashtags?: string[]; // Array of hashtags with different colors
   isList?: boolean; // Flag to indicate if content should be formatted as a list
   listItems?: string[]; // Array of list items
+  contentColor?: string;
+  contentFontFamily?: string;
+  contentAlign?: 'left' | 'center' | 'right';
+  imageFit?: 'cover' | 'contain' | 'fill';
+  imagePosition?: string;
 }
 
 export interface CarouselRequest {
@@ -44,13 +49,6 @@ export interface CarouselRequest {
 }
 
 export class GeminiCarouselGenerator {
-  private model;
-
-  constructor() {
-    // Use the stable gemini-pro model instead of experimental version
-    this.model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-  }
-
   async generateCarousel(request: CarouselRequest): Promise<CarouselSlide[]> {
     // Check if API key is available
     if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
@@ -61,22 +59,22 @@ export class GeminiCarouselGenerator {
     
     try {
       console.log('Generating carousel with Gemini API...');
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
       
       console.log('Gemini API response received');
-      return this.parseCarouselResponse(text);
+      return this.parseCarouselResponse(response.text);
     } catch (error: any) {
       console.error('Detailed Gemini API error:', error);
       
       // Provide more specific error messages
-      if (error.message?.includes('API key')) {
+      if (error.message?.includes('API key') || error.message?.includes('403')) {
         throw new Error('Invalid API key. Please check your Google Gemini API key configuration.');
       } else if (error.message?.includes('quota')) {
         throw new Error('API quota exceeded. Please check your Google Cloud billing and quotas.');
-      } else if (error.message?.includes('403')) {
-        throw new Error('API access denied. Please ensure your API key has the correct permissions and billing is enabled.');
       } else if (error.message?.includes('404')) {
         throw new Error('Model not found. The Gemini model may not be available in your region.');
       } else {
@@ -263,9 +261,11 @@ Return only the optimized headline, nothing else.
     `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text().trim();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+      return response.text.trim();
     } catch (error) {
       console.error('Error optimizing headline:', error);
       return headline;
@@ -294,9 +294,11 @@ Return only the enhanced content, nothing else.
     `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text().trim();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+      return response.text.trim();
     } catch (error) {
       console.error('Error enhancing content:', error);
       return content;
