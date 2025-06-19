@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile, AlignLeft, AlignCenter, AlignRight, Move, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile, AlignLeft, AlignCenter, AlignRight, Move, RotateCcw, AlertCircle } from 'lucide-react';
 import { Canvas, FabricImage, Rect, Circle, FabricText, Shadow } from 'fabric';
 import { zip } from 'fflate';
 import { saveAs } from 'file-saver';
@@ -84,6 +84,7 @@ const FormattedContent = ({ content }: { content: string }) => {
 function EditorPageContent() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const [isDownloadingPreview, setIsDownloadingPreview] = React.useState(false);
   const [isDownloadingZip, setIsDownloadingZip] = React.useState(false);
@@ -116,6 +117,14 @@ function EditorPageContent() {
     console.log('Editor: Current slides in store:', slides.length);
     if (slides.length > 0) {
       console.log('Editor: Found slides, first slide:', slides[0]);
+      
+      // Auto-check for content overflow in all slides and suggest splits
+      slides.forEach((slide, index) => {
+        const overflowCheck = checkContentOverflow(slide);
+        if (overflowCheck.isOverflowing) {
+          console.log(`Slide ${index + 1} has content overflow:`, overflowCheck.suggestion);
+        }
+      });
     }
     
     const timer = setTimeout(() => {
@@ -723,6 +732,318 @@ function EditorPageContent() {
     return { mainContent: mainContent.trim(), hashtags };
   };
 
+  // Smart content fitting function
+  const getOptimalTextSize = (text: string, containerWidth: number, maxLines: number = 8) => {
+    const baseSize = 14;
+    const wordsCount = text.split(' ').length;
+    const charactersCount = text.length;
+    
+    // Adjust font size based on content length
+    if (charactersCount > 300) return { fontSize: '12px', lineHeight: '1.3' };
+    if (charactersCount > 200) return { fontSize: '13px', lineHeight: '1.4' };
+    if (charactersCount > 100) return { fontSize: '14px', lineHeight: '1.5' };
+    return { fontSize: '15px', lineHeight: '1.6' };
+  };
+
+  // Check if content is too long and suggest splitting
+  const checkContentOverflow = (slide: any) => {
+    if (!slide.content) return { isOverflowing: false, suggestion: '' };
+    
+    const contentLength = slide.content.length;
+    const titleLength = slide.title?.length || 0;
+    const totalLength = contentLength + titleLength;
+    
+    // Thresholds for different content lengths
+    if (totalLength > 400) {
+      return {
+        isOverflowing: true,
+        suggestion: 'Content is too long for optimal display. Consider splitting into multiple slides.'
+      };
+    }
+    
+    if (contentLength > 250) {
+      return {
+        isOverflowing: true,
+        suggestion: 'Content might be better split across 2 slides for readability.'
+      };
+    }
+    
+    return { isOverflowing: false, suggestion: '' };
+  };
+
+  // Auto-split content function
+  const autoSplitContent = (longContent: string, maxCharsPerSlide: number = 200) => {
+    const sentences = longContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const slides = [];
+    let currentSlideContent = '';
+    
+    for (const sentence of sentences) {
+      const trimmedSentence = sentence.trim();
+      if (currentSlideContent.length + trimmedSentence.length + 1 <= maxCharsPerSlide) {
+        currentSlideContent += (currentSlideContent ? '. ' : '') + trimmedSentence;
+      } else {
+        if (currentSlideContent) {
+          slides.push(currentSlideContent + '.');
+        }
+        currentSlideContent = trimmedSentence;
+      }
+    }
+    
+    if (currentSlideContent) {
+      slides.push(currentSlideContent + '.');
+    }
+    
+    return slides;
+  };
+
+  // Helper function to render text on canvas
+  const renderTextOnCanvas = React.useCallback((ctx: CanvasRenderingContext2D, slide: any) => {
+    // Set text properties
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Render emoji
+    if (slide.emoji) {
+      ctx.font = '72px Arial';
+      const emojiX = (parseFloat(slide.emojiPositionX || '50') / 100) * 1080;
+      const emojiY = (parseFloat(slide.emojiPositionY || '10') / 100) * 1080;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(slide.emoji, emojiX, emojiY);
+    }
+    
+    // Render title
+    if (slide.title) {
+      const titleX = (parseFloat(slide.titlePositionX || '50') / 100) * 1080;
+      const titleY = (parseFloat(slide.titlePositionY || '40') / 100) * 1080;
+      
+      ctx.font = `bold 48px ${slide.titleFontFamily || 'Inter'}`;
+      ctx.fillStyle = slide.titleColor || '#FFFFFF';
+      ctx.textAlign = slide.titleAlign || 'center';
+      
+      // Add text shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+      
+      // Wrap text if needed
+      const maxWidth = 900;
+      const words = slide.title.split(' ');
+      let line = '';
+      let lines = [];
+      
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line);
+          line = words[n] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      
+      lines.forEach((line, index) => {
+        ctx.fillText(line, titleX, titleY + (index * 60));
+      });
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+    
+    // Render content
+    if (slide.content) {
+      const { mainContent, hashtags } = splitContentAndHashtags(slide.content);
+      
+      if (mainContent) {
+        const contentX = (parseFloat(slide.contentPositionX || '50') / 100) * 1080;
+        const contentY = (parseFloat(slide.contentPositionY || '60') / 100) * 1080;
+        
+        ctx.font = `32px ${slide.contentFontFamily || 'Inter'}`;
+        ctx.fillStyle = slide.contentColor || '#FFFFFF';
+        ctx.textAlign = slide.contentAlign || 'center';
+        
+        // Add subtle text shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+        
+        // Wrap content text
+        const maxWidth = 900;
+        const words = mainContent.split(' ');
+        let line = '';
+        let lines = [];
+        
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          const testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+          } else {
+            line = testLine;
+          }
+        }
+        lines.push(line);
+        
+        // Limit to 8 lines
+        lines = lines.slice(0, 8);
+        
+        lines.forEach((line, index) => {
+          ctx.fillText(line, contentX, contentY + (index * 40));
+        });
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+      
+      // Render hashtags at bottom
+      if (hashtags) {
+        ctx.font = '24px Arial';
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = slide.contentAlign || 'center';
+        
+        // Add white shadow for hashtags
+        ctx.shadowColor = 'rgba(255,255,255,0.8)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+        
+        ctx.fillText(hashtags, 540, 1000);
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+    }
+  }, [splitContentAndHashtags]);
+
+  // Canvas preview rendering function
+  const renderCanvasPreview = React.useCallback(async () => {
+    if (!canvasRef.current) return;
+    
+    const slide = currentSlideData;
+    const canvasElement = canvasRef.current;
+    const ctx = canvasElement.getContext('2d');
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, 1080, 1080);
+    
+    // Auto-detect background type if not set
+    const actualBackgroundType = slide.backgroundType || 
+      (slide.gradient ? 'gradient' : 
+       slide.backgroundImage ? 'image' : 'color');
+    
+    // Handle different background types
+    if (actualBackgroundType === 'gradient' && slide.gradient) {
+      // Parse and render gradient
+      const gradientMatch = slide.gradient.match(/linear-gradient\(([^)]+)\)/);
+      if (gradientMatch) {
+        const gradientString = gradientMatch[1];
+        const angleMatch = gradientString.match(/^(\d+deg)/);
+        const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
+        const withoutAngle = gradientString.replace(/^\d+deg,?\s*/, '');
+        
+        const colorStopPattern = /((?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[a-fA-F0-9]{3,6}|(?:red|blue|green|yellow|orange|purple|pink|brown|black|white|gray|grey|transparent)))\s*(\d+%)?/g;
+        const colorStops: Array<{color: string, position?: number}> = [];
+        let match;
+        
+        while ((match = colorStopPattern.exec(withoutAngle)) !== null) {
+          const color = match[1].trim();
+          const position = match[2] ? parseInt(match[2]) / 100 : undefined;
+          colorStops.push({ color, position });
+        }
+        
+        if (colorStops.length > 0) {
+          const angleRad = (angle - 90) * Math.PI / 180;
+          const x1 = 540 + Math.cos(angleRad) * 540;
+          const y1 = 540 + Math.sin(angleRad) * 540;
+          const x2 = 540 - Math.cos(angleRad) * 540;
+          const y2 = 540 - Math.sin(angleRad) * 540;
+          
+          const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+          colorStops.forEach((stop, index) => {
+            const position = stop.position !== undefined ? stop.position : (index / (colorStops.length - 1));
+            gradient.addColorStop(position, stop.color);
+          });
+          
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 1080, 1080);
+        }
+      }
+    } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
+      // Handle background image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const fitValue = slide.imageFit || slide.backgroundImageFit || 'cover';
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        let dx = 0, dy = 0, dw = 1080, dh = 1080;
+        
+        if (fitValue === 'cover') {
+          const scale = Math.max(1080 / img.width, 1080 / img.height);
+          const scaledWidth = img.width * scale;
+          const scaledHeight = img.height * scale;
+          
+          const bgX = (parseFloat(slide.backgroundImageX || '50') - 50) / 100;
+          const bgY = (parseFloat(slide.backgroundImageY || '50') - 50) / 100;
+          
+          dx = (1080 - scaledWidth) / 2 + (bgX * scaledWidth * 0.5);
+          dy = (1080 - scaledHeight) / 2 + (bgY * scaledHeight * 0.5);
+          dw = scaledWidth;
+          dh = scaledHeight;
+        } else if (fitValue === 'contain') {
+          const scale = Math.min(1080 / img.width, 1080 / img.height);
+          dw = img.width * scale;
+          dh = img.height * scale;
+          dx = (1080 - dw) / 2;
+          dy = (1080 - dh) / 2;
+        }
+        
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        
+        // Apply photoshoot template effects if needed
+        if (slide.template === 'photoshoot') {
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+          ctx.fillRect(0, 0, 1080, 1080);
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        // Render text content after image loads
+        renderTextOnCanvas(ctx, slide);
+      };
+      img.src = slide.backgroundImage;
+      return; // Exit early for async image loading
+    } else {
+      // Handle solid color background
+      const bgColor = slide.backgroundColor || colors[currentSlide % colors.length];
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, 1080, 1080);
+    }
+    
+    // Render text content for non-image backgrounds
+    renderTextOnCanvas(ctx, slide);
+  }, [currentSlideData, currentSlide, colors, renderTextOnCanvas]);
+
+  // Update canvas when slide changes
+  React.useEffect(() => {
+    renderCanvasPreview();
+  }, [renderCanvasPreview]);
+
   if (!currentSlideData) {
     return <div>Loading...</div>;
   }
@@ -981,6 +1302,57 @@ function EditorPageContent() {
                     {/* Content Section */}
                     <div className="space-y-3">
                       <h4 className="text-sm font-semibold text-gray-800 border-b pb-1">Content</h4>
+                      
+                      {/* Content Overflow Warning */}
+                      {(() => {
+                        const overflowCheck = checkContentOverflow(currentSlideData);
+                        if (overflowCheck.isOverflowing) {
+                          return (
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-sm text-amber-800 font-medium">Content Too Long</p>
+                                  <p className="text-xs text-amber-700 mt-1">{overflowCheck.suggestion}</p>
+                                  <button
+                                    onClick={() => {
+                                      const splitSlides = autoSplitContent(currentSlideData.content);
+                                      if (splitSlides.length > 1) {
+                                        // Update current slide with first part
+                                        updateSlide(currentSlideData.id, { content: splitSlides[0] });
+                                        
+                                        // Create new slides for remaining content
+                                        splitSlides.slice(1).forEach((content, index) => {
+                                          const newSlide: CarouselSlide = {
+                                            id: `slide-${Date.now()}-${index}`,
+                                            title: index === 0 ? currentSlideData.title : `${currentSlideData.title} (Cont.)`,
+                                            content: content,
+                                            emoji: currentSlideData.emoji,
+                                            backgroundColor: currentSlideData.backgroundColor,
+                                            backgroundType: currentSlideData.backgroundType,
+                                            gradient: currentSlideData.gradient,
+                                            backgroundImage: currentSlideData.backgroundImage
+                                          };
+                                          
+                                          // Insert new slide after current one
+                                          const newSlides = [...slides];
+                                          newSlides.splice(currentSlide + 1 + index, 0, newSlide);
+                                          setSlides(newSlides);
+                                        });
+                                      }
+                                    }}
+                                    className="mt-2 px-3 py-1 bg-amber-100 text-amber-800 text-xs rounded-md hover:bg-amber-200 transition-colors"
+                                  >
+                                    Auto-Split Content
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                      
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Content Text
@@ -993,6 +1365,9 @@ function EditorPageContent() {
                         />
                         <div className="mt-1 text-xs text-gray-500">
                           {(currentSlideData.content || '').length} characters
+                          {(currentSlideData.content || '').length > 250 && (
+                            <span className="text-amber-600 ml-2">⚠ Content might be too long</span>
+                          )}
                           <br />
                           💡 Tip: Add hashtags at the end of your content for proper line breaks
                         </div>
@@ -1253,71 +1628,6 @@ function EditorPageContent() {
                       </div>
                     </div>
 
-                    {/* Emoji Position */}
-                    {currentSlideData.emoji && (
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-800 border-b pb-1">Emoji Position</h4>
-                        
-                        {/* Emoji Horizontal Position */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-2">
-                            Horizontal Position: {currentSlideData.emojiPositionX || '50'}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionX || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
-                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
-                              }}
-                            />
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionX || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
-                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
-                            />
-                            <span className="text-xs text-gray-500">%</span>
-                          </div>
-                        </div>
-                        
-                        {/* Emoji Vertical Position */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-2">
-                            Vertical Position: {currentSlideData.emojiPositionY || '25'}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionY || '25'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
-                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 25}%, #e5e7eb ${currentSlideData.emojiPositionY || 25}%, #e5e7eb 100%)`
-                              }}
-                            />
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionY || '25'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
-                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
-                            />
-                            <span className="text-xs text-gray-500">%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Reset Positions Button */}
                     <div className="pt-2 border-t">
                       <button
@@ -1327,7 +1637,7 @@ function EditorPageContent() {
                           contentPositionX: '50',
                           contentPositionY: '60',
                           emojiPositionX: '50',
-                          emojiPositionY: '25'
+                          emojiPositionY: '10'
                         })}
                         className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                       >
@@ -1631,6 +1941,85 @@ function EditorPageContent() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Emoji Position Controls */}
+                    {currentSlideData.emoji && (
+                      <div className="space-y-3 pt-3 border-t border-gray-200">
+                        <h5 className="text-xs font-semibold text-gray-800">Position</h5>
+                        
+                        {/* Emoji Horizontal Position */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Horizontal Position: {currentSlideData.emojiPositionX || '50'}%
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionX || '50'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
+                              }}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionX || '50'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                          </div>
+                        </div>
+                        
+                        {/* Emoji Vertical Position */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Vertical Position: {currentSlideData.emojiPositionY || '10'}%
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionY || '10'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
+                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 10}%, #e5e7eb ${currentSlideData.emojiPositionY || 10}%, #e5e7eb 100%)`
+                              }}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionY || '10'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
+                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                          </div>
+                        </div>
+
+                        {/* Reset Emoji Position Button */}
+                        <div className="pt-2">
+                          <button
+                            onClick={() => updateSlide(currentSlideData.id, {
+                              emojiPositionX: '50',
+                              emojiPositionY: '10'
+                            })}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Reset Position
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1638,214 +2027,39 @@ function EditorPageContent() {
           </div>
         </div>
 
-        {/* Right Side - Slide Preview */}
+        {/* Right Side - Canvas Preview */}
         <div className="flex-1 flex items-center justify-center p-6 bg-gray-100 overflow-hidden">
-          <div className="relative max-w-md w-full">
-            {/* Preview - Properly contained and sized */}
+          <div className="relative">
+            {/* Canvas Preview - Shows actual 1080x1080 dimensions */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="relative w-full aspect-square max-w-sm mx-auto"
+              className="relative group transition-all duration-300 hover:scale-[1.02]"
             >
-              <div
-                className="w-full h-full shadow-2xl relative overflow-hidden rounded-lg"
-                style={getSlideStyle(currentSlideData)}
-              >
-                {/* Photoshoot Template Cinematic Effects */}
-                {currentSlideData.template === 'photoshoot' && currentSlideData.backgroundImage && (
-                  <>
-                    {/* Background Image with Filter */}
-                    <img 
-                      src={currentSlideData.backgroundImage} 
-                      alt="Background" 
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{
-                        opacity: 0.85,
-                        filter: 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)'
-                      }}
-                    />
-                    
-                    {/* Professional Lighting System for Better Face Visibility */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        mixBlendMode: 'multiply'
-                      }}
-                    />
-                    
-                    {/* Enhanced Key Light for Face - Multiple Zones */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `
-                          radial-gradient(ellipse 150px 200px at 50% 45%, rgba(255, 220, 150, 0.25) 0%, rgba(255, 200, 120, 0.15) 30%, transparent 50%),
-                          radial-gradient(ellipse 125px 175px at 48% 42%, rgba(255, 240, 180, 0.2) 0%, rgba(255, 220, 140, 0.1) 25%, transparent 45%),
-                          radial-gradient(circle 100px at 52% 48%, rgba(255, 235, 160, 0.18) 0%, transparent 40%)
-                        `,
-                        mixBlendMode: 'soft-light'
-                      }}
-                    />
-                    
-                    {/* Face Highlight Zone */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `
-                          radial-gradient(ellipse 90px 110px at 50% 40%, rgba(255, 255, 220, 0.15) 0%, rgba(255, 240, 180, 0.08) 35%, transparent 55%)
-                        `,
-                        mixBlendMode: 'overlay'
-                      }}
-                    />
-                    
-                    {/* Controlled Shadow Enhancement */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `
-                          radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.8) 100%)
-                        `,
-                        mixBlendMode: 'multiply'
-                      }}
-                    />
-                    
-                    {/* Cinematic Edge Vignette */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `
-                          radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.4) 55%, rgba(0, 0, 0, 0.9) 100%)
-                        `,
-                        mixBlendMode: 'darken'
-                      }}
-                    />
-                    
-                    {/* Warm Skin Tone Enhancement */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `
-                          radial-gradient(ellipse 110px 140px at 50% 43%, rgba(255, 200, 150, 0.12) 0%, rgba(240, 180, 120, 0.06) 40%, transparent 60%),
-                          linear-gradient(45deg, rgba(139, 69, 19, 0.05) 0%, rgba(160, 82, 45, 0.03) 50%, rgba(0, 0, 0, 0.08) 100%)
-                        `,
-                        mixBlendMode: 'overlay'
-                      }}
-                    />
-                  </>
-                )}
-                
-                {/* Content Layer - PROPERLY CENTERED AND ALIGNED */}
-                <div className="absolute inset-0 text-white p-4">
-                  {/* Container for all content with individual positioning */}
-                  <div className="w-full h-full relative">
-                    {/* Emoji with individual positioning */}
-                    {currentSlideData.emoji && (
-                      <div 
-                        className="absolute text-3xl transition-all duration-300 ease-in-out"
-                        style={{ 
-                          left: `${currentSlideData.emojiPositionX || '50'}%`,
-                          top: `${currentSlideData.emojiPositionY || '25'}%`,
-                          transform: 'translate(-50%, -50%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {currentSlideData.emoji}
-                      </div>
-                    )}
-                    
-                    {/* Title with individual positioning */}
-                    {currentSlideData.title && (
-                      <div
-                        className="absolute transition-all duration-300 ease-in-out"
-                        style={{
-                          left: `${currentSlideData.titlePositionX || '50'}%`,
-                          top: `${currentSlideData.titlePositionY || '40'}%`,
-                          transform: 'translate(-50%, -50%)',
-                          width: 'calc(100% - 2rem)',
-                          maxWidth: '90%'
-                        }}
-                      >
-                        <h2
-                          className="text-lg font-bold leading-tight w-full"
-                          style={{
-                            fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
-                            color: currentSlideData.titleColor || '#FFFFFF',
-                            textAlign: currentSlideData.titleAlign || 'center',
-                            wordWrap: 'break-word',
-                            overflowWrap: 'break-word',
-                            hyphens: 'auto',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                          }}
-                        >
-                          {currentSlideData.title}
-                        </h2>
-                      </div>
-                    )}
-                    
-                    {/* Content with individual positioning */}
-                    {currentSlideData.content && (() => {
-                      const { mainContent, hashtags } = splitContentAndHashtags(currentSlideData.content);
-                      return (
-                        <div 
-                          className="absolute transition-all duration-300 ease-in-out"
-                          style={{
-                            left: `${currentSlideData.contentPositionX || '50'}%`,
-                            top: `${currentSlideData.contentPositionY || '60'}%`,
-                            transform: 'translate(-50%, -50%)',
-                            width: 'calc(100% - 2rem)',
-                            maxWidth: '90%'
-                          }}
-                        >
-                          {/* Main Content */}
-                          {mainContent && (
-                            <div
-                              className="text-sm leading-relaxed mb-3 w-full"
-                              style={{
-                                fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
-                                color: currentSlideData.contentColor || '#FFFFFF',
-                                textAlign: currentSlideData.contentAlign || 'center',
-                                wordWrap: 'break-word',
-                                overflowWrap: 'break-word',
-                                hyphens: 'auto',
-                                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                              }}
-                            >
-                              {mainContent}
-                            </div>
-                          )}
-                          
-                          {/* Hashtags */}
-                          {hashtags && (
-                            <div
-                              className="text-sm font-bold leading-relaxed w-full"
-                              style={{
-                                fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
-                                color: '#000000',
-                                textAlign: currentSlideData.contentAlign || 'center',
-                                wordWrap: 'break-word',
-                                overflowWrap: 'break-word',
-                                textShadow: '0 1px 3px rgba(255,255,255,0.8)'
-                              }}
-                            >
-                              {hashtags}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
+              <canvas
+                ref={canvasRef}
+                width={1080}
+                height={1080}
+                className="border border-gray-300 rounded-lg shadow-lg bg-white max-w-full h-auto"
+                style={{ 
+                  aspectRatio: '1/1',
+                  maxHeight: '70vh',
+                  width: 'auto'
+                }}
+              />
+              
+              {/* Canvas overlay showing dimensions */}
+              <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                1080×1080px
+              </div>
+              
+              {/* Slide counter */}
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                {currentSlide + 1} of {slides.length}
               </div>
             </motion.div>
-            
-            {/* Slide indicator */}
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-              {currentSlide + 1} of {slides.length}
-            </div>
           </div>
         </div>
       </div>
