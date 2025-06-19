@@ -62,9 +62,8 @@ const FormattedContent = ({ content }: { content: string }) => {
           <span
             key={index}
             style={{
-              color: '#3B82F6', // Bright blue color for hashtags
-              fontWeight: '700',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)' // Add shadow for better visibility
+              color: '#FF6B35', // Orange color for hashtags
+              fontWeight: '700'
             }}
           >
             {part}
@@ -160,14 +159,14 @@ function EditorPageContent() {
     try {
       const slide = currentSlideData;
       
-      // Use same size as preview (432x432) instead of 1080x1080
+      // Use Instagram standard size 1080x1080
       const canvasElement = document.createElement('canvas');
-      canvasElement.width = 432;
-      canvasElement.height = 432;
+      canvasElement.width = 1080;
+      canvasElement.height = 1080;
       
       const canvas = new Canvas(canvasElement);
-      canvas.setWidth(432);
-      canvas.setHeight(432);
+      canvas.setWidth(1080);
+      canvas.setHeight(1080);
       canvas.backgroundColor = slide.backgroundColor || colors[currentSlide % colors.length];
       
       if (slide.backgroundImage) {
@@ -178,8 +177,8 @@ function EditorPageContent() {
             fabricImg.set({
               left: 0,
               top: 0,
-              scaleX: 432 / fabricImg.width!,
-              scaleY: 432 / fabricImg.height!,
+              scaleX: 1080 / fabricImg.width!,
+              scaleY: 1080 / fabricImg.height!,
               selectable: false
             });
             
@@ -243,17 +242,17 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 32; // Scaled down padding for 432px canvas
-    const canvasWidth = 432;
-    const canvasHeight = 432;
+    const padding = 80; // Padding for 1080px canvas
+    const canvasWidth = 1080;
+    const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
 
-    // EMOJI - Position exactly like preview
+    // EMOJI - Position for 1080px canvas
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 64, // Same as preview positioning
-        fontSize: 32, // Same as preview size
+        top: 160, // Scaled for 1080px
+        fontSize: 80, // Scaled for 1080px
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
@@ -262,12 +261,12 @@ function EditorPageContent() {
       canvas.add(emoji);
     }
 
-    // TITLE - Position exactly like preview
+    // TITLE - Position for 1080px canvas
     if (slide.title) {
-      const titleFontSize = 18; // Same as preview
+      const titleFontSize = 44; // Scaled for 1080px
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
       const titleLineHeight = titleFontSize * 1.2;
-      const titleStartY = 112; // Same as preview
+      const titleStartY = 280; // Scaled for 1080px
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -286,16 +285,16 @@ function EditorPageContent() {
       });
     }
 
-    // CONTENT - Position exactly like preview with proper hashtag handling
+    // CONTENT - Position for 1080px canvas with proper hashtag handling
     if (slide.content) {
       // Split content into main content and hashtags
       const contentParts = slide.content.split(/(\s*#\w+(?:\s+#\w+)*\s*)$/);
       const mainContent = contentParts[0]?.trim() || '';
       const hashtagsPart = contentParts[1]?.trim() || '';
 
-      const contentFontSize = 12; // Same as preview
+      const contentFontSize = 28; // Scaled for 1080px
       const contentLineHeight = contentFontSize * 1.4;
-      const contentStartY = 192; // Same as preview
+      const contentStartY = 480; // Scaled for 1080px
 
       // Add main content
       if (mainContent) {
@@ -318,7 +317,7 @@ function EditorPageContent() {
 
         // Add hashtags on separate lines with proper spacing
         if (hashtagsPart) {
-          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 20; // Add extra spacing
+          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 50; // Add extra spacing
           const hashtags = hashtagsPart.split(/\s+/).filter(tag => tag.startsWith('#'));
           
           // Group hashtags into lines that fit
@@ -353,18 +352,13 @@ function EditorPageContent() {
               top: hashtagStartY + (index * contentLineHeight),
               fontSize: contentFontSize,
               fontFamily: slide.contentFontFamily || 'Inter',
-              fill: '#3B82F6', // Bright blue for hashtags
+              fill: '#FF6B35', // Orange color for hashtags
               fontWeight: 'bold',
               textAlign: 'center',
               originX: 'center',
               originY: 'center',
-              selectable: false,
-              shadow: new Shadow({
-                color: 'rgba(0,0,0,0.5)',
-                blur: 2,
-                offsetX: 1,
-                offsetY: 1
-              })
+              selectable: false
+              // No shadow for hashtags
             });
             canvas.add(hashtagText);
           });
@@ -389,14 +383,14 @@ function EditorPageContent() {
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         
-        // Use same size as preview (432x432)
+        // Use Instagram standard size 1080x1080
         const canvasElement = document.createElement('canvas');
-        canvasElement.width = 432;
-        canvasElement.height = 432;
+        canvasElement.width = 1080;
+        canvasElement.height = 1080;
         
         const canvas = new Canvas(canvasElement);
-        canvas.setWidth(432);
-        canvas.setHeight(432);
+        canvas.setWidth(1080);
+        canvas.setHeight(1080);
         canvas.backgroundColor = slide.backgroundColor || colors[i % colors.length];
         
         addTextToCanvas(canvas, slide);
@@ -810,21 +804,16 @@ function EditorPageContent() {
         {/* Right Side - Slide Preview */}
         <div className="flex-1 flex items-center justify-center p-8 bg-gray-100">
           <div className="relative">
-            {/* Preview size indicator */}
-            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              Preview & Download Size: 432×432px
-            </div>
-            
-            {/* Preview - 432x432 (same as download size) */}
+            {/* Preview - 540x540 (scaled down from 1080x1080 for display) */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="relative mt-4"
+              className="relative"
               style={{
-                width: '432px',
-                height: '432px',
+                width: '540px',
+                height: '540px',
               }}
             >
               <div
@@ -918,8 +907,8 @@ function EditorPageContent() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8">
                   {currentSlideData.emoji && (
                     <div 
-                      className="absolute text-3xl"
-                      style={{ top: '64px' }} // Same as canvas positioning
+                      className="absolute text-4xl"
+                      style={{ top: '80px' }} // Scaled for 540px preview (160px / 2)
                     >
                       {currentSlideData.emoji}
                     </div>
@@ -927,9 +916,9 @@ function EditorPageContent() {
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute text-lg font-bold text-center w-full px-6 leading-tight"
+                      className="absolute text-2xl font-bold text-center w-full px-6 leading-tight"
                       style={{
-                        top: '112px', // Same as canvas positioning
+                        top: '140px', // Scaled for 540px preview (280px / 2)
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -944,9 +933,9 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute text-xs w-full px-6 leading-relaxed"
+                      className="absolute text-sm w-full px-6 leading-relaxed"
                       style={{
-                        top: '192px', // Same as canvas positioning
+                        top: '240px', // Scaled for 540px preview (480px / 2)
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
