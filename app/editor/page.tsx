@@ -4,7 +4,7 @@ import React, { useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile, AlignLeft, AlignCenter, AlignRight, Move, RotateCcw, AlertCircle } from 'lucide-react';
-import { Canvas, FabricImage, Rect, Circle, FabricText, Shadow } from 'fabric';
+import { Canvas, FabricImage, FabricText, Shadow, filters } from 'fabric';
 import { zip } from 'fflate';
 import { saveAs } from 'file-saver';
 import { useCarouselStore } from '@/lib/carousel-store';
@@ -51,35 +51,7 @@ const emojis = [
   '👑', '🌈', '⭐', '🎭', '🤝', '🔔', '🌍', '⚙️'
 ];
 
-// Component for rendering formatted content with hashtag styling
-const FormattedContent = ({ content }: { content: string }) => {
-  const formatContent = (text: string) => {
-    // Split by hashtags and preserve them
-    const parts = text.split(/(#\w+)/g);
-    return parts.map((part, index) => {
-      if (part.startsWith('#')) {
-        return (
-          <span
-            key={index}
-            style={{
-              color: '#000000', // Black color for hashtags
-              fontWeight: '700'
-            }}
-          >
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
 
-  return (
-    <div style={{ whiteSpace: 'pre-line' }}>
-      {formatContent(content)}
-    </div>
-  );
-};
 
 function EditorPageContent() {
   const router = useRouter();
@@ -94,22 +66,19 @@ function EditorPageContent() {
     slides,
     currentSlide,
     isPreviewMode,
-    editingSlide,
     showFontPanel,
     showColorPanel,
     showBackgroundPanel,
     setSlides,
     setCurrentSlide,
     setIsPreviewMode,
-    setEditingSlide,
     setShowFontPanel,
     setShowColorPanel,
     setShowBackgroundPanel,
     addSlide,
     deleteSlide,
     duplicateSlide,
-    updateSlide,
-    ensureSlideColors
+    updateSlide
   } = useCarouselStore();
 
   // Initialize slides if they don't exist (with delay to allow store to populate)
@@ -312,9 +281,9 @@ function EditorPageContent() {
             // Apply photoshoot template filters if it's a photoshoot template
             if (slide.template === 'photoshoot') {
               fabricImg.filters = [
-                new fabric.Image.filters.Brightness({ brightness: -0.4 }),
-                new fabric.Image.filters.Contrast({ contrast: 0.3 }),
-                new fabric.Image.filters.Saturation({ saturation: -0.2 })
+                new filters.Brightness({ brightness: -0.4 }),
+                new filters.Contrast({ contrast: 0.3 }),
+                new filters.Saturation({ saturation: -0.2 })
               ];
               fabricImg.applyFilters();
             }
@@ -467,7 +436,7 @@ function EditorPageContent() {
       
       // Center the title block
       const titleBlockHeight = titleLines.length * titleLineHeight;
-      let titleY = currentY + (titleBlockHeight / 2) - (titleLineHeight / 2);
+      const titleY = currentY + (titleBlockHeight / 2) - (titleLineHeight / 2);
       
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -500,7 +469,7 @@ function EditorPageContent() {
       
       // Center the content block
       const contentBlockHeight = contentLines.length * contentLineHeight;
-      let contentY = currentY + (contentBlockHeight / 2) - (contentLineHeight / 2);
+      const contentY = currentY + (contentBlockHeight / 2) - (contentLineHeight / 2);
       
       contentLines.forEach((line, index) => {
         const content = new FabricText(line, {
@@ -532,7 +501,7 @@ function EditorPageContent() {
       
       // Center the hashtag block
       const hashtagBlockHeight = hashtagLines.length * hashtagLineHeight;
-      let hashtagY = currentY + (hashtagBlockHeight / 2) - (hashtagLineHeight / 2);
+      const hashtagY = currentY + (hashtagBlockHeight / 2) - (hashtagLineHeight / 2);
       
       hashtagLines.forEach((line, index) => {
         const hashtagText = new FabricText(line, {
@@ -559,7 +528,7 @@ function EditorPageContent() {
   };
 
   const downloadCanvas = (canvas: Canvas, filename: string) => {
-    const dataURL = canvas.toDataURL('image/png', 1.0);
+    const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
     const link = document.createElement('a');
     link.download = `${filename}.png`;
     link.href = dataURL;
@@ -657,7 +626,7 @@ function EditorPageContent() {
         
         addTextToCanvas(canvas, slide);
         
-        const dataURL = canvas.toDataURL('image/png', 1.0);
+        const dataURL = canvas.toDataURL({ format: 'png', multiplier: 1 });
         const base64Data = dataURL.split(',')[1];
         const binaryData = atob(base64Data);
         const bytes = new Uint8Array(binaryData.length);
@@ -732,21 +701,10 @@ function EditorPageContent() {
     return { mainContent: mainContent.trim(), hashtags };
   };
 
-  // Smart content fitting function
-  const getOptimalTextSize = (text: string, containerWidth: number, maxLines: number = 8) => {
-    const baseSize = 14;
-    const wordsCount = text.split(' ').length;
-    const charactersCount = text.length;
-    
-    // Adjust font size based on content length
-    if (charactersCount > 300) return { fontSize: '12px', lineHeight: '1.3' };
-    if (charactersCount > 200) return { fontSize: '13px', lineHeight: '1.4' };
-    if (charactersCount > 100) return { fontSize: '14px', lineHeight: '1.5' };
-    return { fontSize: '15px', lineHeight: '1.6' };
-  };
+
 
   // Check if content is too long and suggest splitting
-  const checkContentOverflow = (slide: any) => {
+  const checkContentOverflow = (slide: CarouselSlide) => {
     if (!slide.content) return { isOverflowing: false, suggestion: '' };
     
     const contentLength = slide.content.length;
@@ -797,7 +755,7 @@ function EditorPageContent() {
   };
 
   // Helper function to render text on canvas
-  const renderTextOnCanvas = React.useCallback((ctx: CanvasRenderingContext2D, slide: any) => {
+  const renderTextOnCanvas = React.useCallback((ctx: CanvasRenderingContext2D, slide: CarouselSlide) => {
     // Set text properties
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -813,8 +771,8 @@ function EditorPageContent() {
     
     // Render title
     if (slide.title) {
-      const titleX = (parseFloat(slide.titlePositionX || '50') / 100) * 1080;
-      const titleY = (parseFloat(slide.titlePositionY || '40') / 100) * 1080;
+      const titleX = (parseFloat(slide.textPositionX || '50') / 100) * 1080;
+      const titleY = (parseFloat(slide.textPositionY || '40') / 100) * 1080;
       
       ctx.font = `bold 48px ${slide.titleFontFamily || 'Inter'}`;
       ctx.fillStyle = slide.titleColor || '#FFFFFF';
@@ -830,7 +788,7 @@ function EditorPageContent() {
       const maxWidth = 900;
       const words = slide.title.split(' ');
       let line = '';
-      let lines = [];
+      const lines = [];
       
       for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
@@ -861,8 +819,8 @@ function EditorPageContent() {
       const { mainContent, hashtags } = splitContentAndHashtags(slide.content);
       
       if (mainContent) {
-        const contentX = (parseFloat(slide.contentPositionX || '50') / 100) * 1080;
-        const contentY = (parseFloat(slide.contentPositionY || '60') / 100) * 1080;
+        const contentX = (parseFloat(slide.textPositionX || '50') / 100) * 1080;
+        const contentY = (parseFloat(slide.textPositionY || '60') / 100) * 1080;
         
         ctx.font = `32px ${slide.contentFontFamily || 'Inter'}`;
         ctx.fillStyle = slide.contentColor || '#FFFFFF';
@@ -990,7 +948,10 @@ function EditorPageContent() {
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         const fitValue = slide.imageFit || slide.backgroundImageFit || 'cover';
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        const sx = 0;
+        const sy = 0;
+        const sw = img.width;
+        const sh = img.height;
         let dx = 0, dy = 0, dw = 1080, dh = 1080;
         
         if (fitValue === 'cover') {
@@ -1224,7 +1185,7 @@ function EditorPageContent() {
                           ].map(({ value, icon: Icon, label }) => (
                             <button
                               key={value}
-                              onClick={() => updateSlide(currentSlideData.id, { titleAlign: value as any })}
+                              onClick={() => updateSlide(currentSlideData.id, { titleAlign: value as 'left' | 'center' | 'right' })}
                               className={`flex-1 p-2 rounded border text-xs flex items-center justify-center gap-1 ${
                                 (currentSlideData.titleAlign || 'center') === value
                                   ? 'bg-blue-100 border-blue-300 text-blue-700'
@@ -1386,7 +1347,7 @@ function EditorPageContent() {
                           ].map(({ value, icon: Icon, label }) => (
                             <button
                               key={value}
-                              onClick={() => updateSlide(currentSlideData.id, { contentAlign: value as any })}
+                              onClick={() => updateSlide(currentSlideData.id, { contentAlign: value as 'left' | 'center' | 'right' })}
                               className={`flex-1 p-2 rounded border text-xs flex items-center justify-center gap-1 ${
                                 (currentSlideData.contentAlign || 'center') === value
                                   ? 'bg-blue-100 border-blue-300 text-blue-700'
@@ -1621,6 +1582,69 @@ function EditorPageContent() {
                             max="100"
                             value={currentSlideData.contentPositionY || '60'}
                             onChange={(e) => updateSlide(currentSlideData.id, { contentPositionY: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Emoji Position */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-800 border-b pb-1">Emoji Position</h4>
+                      
+                      {/* Emoji Horizontal Position */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Horizontal Position: {currentSlideData.emojiPositionX || '50'}%
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.emojiPositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.emojiPositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
+                      </div>
+                      
+                      {/* Emoji Vertical Position */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Vertical Position: {currentSlideData.emojiPositionY || '10'}%
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.emojiPositionY || '10'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 10}%, #e5e7eb ${currentSlideData.emojiPositionY || 10}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.emojiPositionY || '10'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
                             className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
                           />
                           <span className="text-xs text-gray-500">%</span>
@@ -1942,82 +1966,12 @@ function EditorPageContent() {
                       ))}
                     </div>
 
-                    {/* Emoji Position Controls */}
+                    {/* Note about position controls */}
                     {currentSlideData.emoji && (
-                      <div className="space-y-3 pt-3 border-t border-gray-200">
-                        <h5 className="text-xs font-semibold text-gray-800">Position</h5>
-                        
-                        {/* Emoji Horizontal Position */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-2">
-                            Horizontal Position: {currentSlideData.emojiPositionX || '50'}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionX || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
-                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
-                              }}
-                            />
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionX || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
-                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
-                            />
-                            <span className="text-xs text-gray-500">%</span>
-                          </div>
-                        </div>
-                        
-                        {/* Emoji Vertical Position */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-2">
-                            Vertical Position: {currentSlideData.emojiPositionY || '10'}%
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionY || '10'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
-                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 10}%, #e5e7eb ${currentSlideData.emojiPositionY || 10}%, #e5e7eb 100%)`
-                              }}
-                            />
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.emojiPositionY || '10'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
-                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
-                            />
-                            <span className="text-xs text-gray-500">%</span>
-                          </div>
-                        </div>
-
-                        {/* Reset Emoji Position Button */}
-                        <div className="pt-2">
-                          <button
-                            onClick={() => updateSlide(currentSlideData.id, {
-                              emojiPositionX: '50',
-                              emojiPositionY: '10'
-                            })}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-                          >
-                            <RotateCcw className="h-3 w-3" />
-                            Reset Position
-                          </button>
-                        </div>
+                      <div className="pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 text-center">
+                          💡 Use the Position Controls panel to adjust emoji placement
+                        </p>
                       </div>
                     )}
                   </div>
