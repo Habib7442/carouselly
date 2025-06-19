@@ -241,7 +241,7 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 80; // Increased padding for better text containment
+    const padding = 100; // Better padding for text containment
     const canvasWidth = 1080;
     const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
@@ -249,7 +249,7 @@ function EditorPageContent() {
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 120, // Moved up slightly
+        top: 140, // Moved up slightly
         fontSize: 80,
         textAlign: 'center',
         originX: 'center',
@@ -260,11 +260,11 @@ function EditorPageContent() {
     }
 
     if (slide.title) {
-      const titleFontSize = 38; // Reduced from 44 to prevent overflow
+      const titleFontSize = 36; // Reduced from 44 to prevent overflow
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
       const titleLineHeight = titleFontSize * 1.1; // Reduced line height
       const totalTitleHeight = titleLines.length * titleLineHeight;
-      const startY = 280 - (totalTitleHeight / 2); // Adjusted position
+      const startY = 300 - (totalTitleHeight / 2); // Adjusted position
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -284,11 +284,11 @@ function EditorPageContent() {
     }
 
     if (slide.content) {
-      const contentFontSize = 20; // Reduced from 22
+      const contentFontSize = 18; // Reduced from 22
       const contentLines = wrapText(slide.content, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
       const contentLineHeight = contentFontSize * 1.3;
       const totalContentHeight = contentLines.length * contentLineHeight;
-      const startY = 500 - (totalContentHeight / 2); // Adjusted position
+      const startY = 520 - (totalContentHeight / 2); // Adjusted position
 
       contentLines.forEach((line, index) => {
         // Check if line contains hashtags for special styling
@@ -802,7 +802,7 @@ function EditorPageContent() {
               Preview (Exact Download Size: 1080×1080px)
             </div>
             
-            {/* Exact Download Preview - 1080x1080 scaled to 50% (540x540) */}
+            {/* Smaller Preview - 1080x1080 scaled to 40% (432x432) */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -810,12 +810,12 @@ function EditorPageContent() {
               transition={{ duration: 0.3 }}
               className="relative mt-4"
               style={{
-                width: '540px',
-                height: '540px',
+                width: '432px', // Reduced from 540px
+                height: '432px', // Reduced from 540px
               }}
             >
               <div
-                className="w-full h-full shadow-2xl relative overflow-hidden"
+                className="w-full h-full shadow-2xl relative overflow-hidden rounded-lg"
                 style={getSlideStyle(currentSlideData)}
               >
                 {/* Photoshoot Template Cinematic Effects */}
@@ -902,14 +902,14 @@ function EditorPageContent() {
                 )}
                 
                 {/* Content Layer */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-10">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8">
                   {currentSlideData.emoji && (
-                    <div className="absolute top-16 text-4xl">{currentSlideData.emoji}</div>
+                    <div className="absolute top-12 text-3xl">{currentSlideData.emoji}</div>
                   )}
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute top-28 text-xl font-bold text-center w-full px-8 leading-tight"
+                      className="absolute top-24 text-lg font-bold text-center w-full px-6 leading-tight"
                       style={{
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
@@ -925,7 +925,7 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute top-48 text-sm w-full px-8 leading-relaxed"
+                      className="absolute top-40 text-xs w-full px-6 leading-relaxed"
                       style={{
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
@@ -933,7 +933,7 @@ function EditorPageContent() {
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         hyphens: 'auto',
-                        maxHeight: '280px',
+                        maxHeight: '200px',
                         overflow: 'hidden'
                       }}
                     >
