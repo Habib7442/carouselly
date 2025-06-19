@@ -285,16 +285,26 @@ function EditorPageContent() {
       });
     }
 
-    // CONTENT - Professional spacing and layout
+    // CONTENT - Professional spacing and layout with better hashtag handling
     if (slide.content) {
-      // Split content into main content and hashtags
+      // Split content into main content and hashtags more intelligently
       const contentParts = slide.content.split(/(\s*#\w+(?:\s+#\w+)*\s*)$/);
-      const mainContent = contentParts[0]?.trim() || '';
-      const hashtagsPart = contentParts[1]?.trim() || '';
+      let mainContent = contentParts[0]?.trim() || '';
+      let hashtagsPart = '';
+      
+      // Find hashtags in the content
+      const hashtagMatches = slide.content.match(/#\w+/g);
+      if (hashtagMatches) {
+        // Remove hashtags from main content
+        hashtagMatches.forEach(hashtag => {
+          mainContent = mainContent.replace(hashtag, '').trim();
+        });
+        hashtagsPart = hashtagMatches.join(' ');
+      }
 
-      const contentFontSize = 32; // Larger, more readable content
+      const contentFontSize = 28; // Slightly smaller to fit more content
       const contentLineHeight = contentFontSize * 1.4;
-      const contentStartY = 420; // Professional spacing from title
+      const contentStartY = 380; // Adjusted for better spacing
 
       // Add main content
       if (mainContent) {
@@ -315,14 +325,15 @@ function EditorPageContent() {
           canvas.add(content);
         });
 
-        // Add hashtags with professional spacing
+        // Add hashtags with professional spacing - positioned lower to ensure visibility
         if (hashtagsPart) {
-          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 60; // Extra spacing before hashtags
+          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 40; // Reduced spacing
           const hashtags = hashtagsPart.split(/\s+/).filter(tag => tag.startsWith('#'));
           
-          // Group hashtags into lines that fit
+          // Group hashtags into lines that fit, with more conservative width
           const hashtagLines: string[] = [];
           let currentHashtagLine = '';
+          const hashtagMaxWidth = contentWidth * 0.9; // Use 90% of available width for safety
           
           hashtags.forEach(hashtag => {
             const testLine = currentHashtagLine + (currentHashtagLine ? ' ' : '') + hashtag;
@@ -332,7 +343,7 @@ function EditorPageContent() {
               ctx.font = `bold ${contentFontSize}px ${slide.contentFontFamily || 'Inter'}`;
               const testWidth = ctx.measureText(testLine).width;
               
-              if (testWidth > contentWidth && currentHashtagLine) {
+              if (testWidth > hashtagMaxWidth && currentHashtagLine) {
                 hashtagLines.push(currentHashtagLine);
                 currentHashtagLine = hashtag;
               } else {
@@ -345,21 +356,25 @@ function EditorPageContent() {
             hashtagLines.push(currentHashtagLine);
           }
 
-          // Render hashtag lines with black color
+          // Render hashtag lines with black color and ensure they fit
           hashtagLines.forEach((line, index) => {
-            const hashtagText = new FabricText(line, {
-              left: canvasWidth / 2,
-              top: hashtagStartY + (index * contentLineHeight),
-              fontSize: contentFontSize,
-              fontFamily: slide.contentFontFamily || 'Inter',
-              fill: '#000000', // Black color for hashtags
-              fontWeight: 'bold',
-              textAlign: 'center',
-              originX: 'center',
-              originY: 'center',
-              selectable: false
-            });
-            canvas.add(hashtagText);
+            const hashtagY = hashtagStartY + (index * contentLineHeight);
+            // Only add hashtag line if it fits within canvas bounds
+            if (hashtagY + contentFontSize < canvasHeight - padding) {
+              const hashtagText = new FabricText(line, {
+                left: canvasWidth / 2,
+                top: hashtagY,
+                fontSize: contentFontSize,
+                fontFamily: slide.contentFontFamily || 'Inter',
+                fill: '#000000', // Black color for hashtags
+                fontWeight: 'bold',
+                textAlign: 'center',
+                originX: 'center',
+                originY: 'center',
+                selectable: false
+              });
+              canvas.add(hashtagText);
+            }
           });
         }
       }
@@ -803,7 +818,7 @@ function EditorPageContent() {
         {/* Right Side - Slide Preview */}
         <div className="flex-1 flex items-center justify-center p-8 bg-gray-100">
           <div className="relative">
-            {/* Preview - 540x540 (scaled down from 1080x1080 for display) */}
+            {/* Preview - Properly fitted 540x540 (scaled down from 1080x1080) */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -903,11 +918,15 @@ function EditorPageContent() {
                 )}
                 
                 {/* Content Layer - EXACT POSITIONING TO MATCH CANVAS */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8">
+                <div className="absolute inset-0 flex flex-col items-center text-white" style={{ padding: '30px' }}>
                   {currentSlideData.emoji && (
                     <div 
                       className="absolute text-4xl"
-                      style={{ top: '60px' }} // Scaled for 540px preview (120px / 2)
+                      style={{ 
+                        top: '60px', // Scaled for 540px preview (120px / 2)
+                        left: '50%',
+                        transform: 'translateX(-50%)'
+                      }}
                     >
                       {currentSlideData.emoji}
                     </div>
@@ -915,9 +934,12 @@ function EditorPageContent() {
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute text-2xl font-bold text-center w-full px-6 leading-tight"
+                      className="absolute text-2xl font-bold text-center leading-tight"
                       style={{
                         top: '110px', // Scaled for 540px preview (220px / 2)
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 'calc(100% - 60px)', // Account for padding
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -932,16 +954,19 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute text-base w-full px-6 leading-relaxed"
+                      className="absolute text-sm leading-relaxed"
                       style={{
-                        top: '210px', // Scaled for 540px preview (420px / 2)
+                        top: '190px', // Scaled for 540px preview (380px / 2)
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 'calc(100% - 60px)', // Account for padding
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         hyphens: 'auto',
-                        maxHeight: '200px',
+                        maxHeight: '280px', // Scaled max height
                         overflow: 'hidden'
                       }}
                     >
