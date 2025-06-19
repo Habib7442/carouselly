@@ -10,6 +10,12 @@ export interface CarouselSlide {
   backgroundImagePosition?: string;
   backgroundImageX?: string;
   backgroundImageY?: string;
+  titlePositionX?: string;
+  titlePositionY?: string;
+  contentPositionX?: string;
+  contentPositionY?: string;
+  emojiPositionX?: string;
+  emojiPositionY?: string;
   textPositionX?: string;
   textPositionY?: string;
   template?: string;
