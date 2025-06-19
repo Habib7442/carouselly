@@ -47,21 +47,41 @@ export class GeminiCarouselGenerator {
   private model;
 
   constructor() {
-    this.model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    // Use the stable gemini-pro model instead of experimental version
+    this.model = genAI.getGenerativeModel({ model: 'gemini-pro' });
   }
 
   async generateCarousel(request: CarouselRequest): Promise<CarouselSlide[]> {
+    // Check if API key is available
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+      throw new Error('Google Gemini API key is not configured. Please add NEXT_PUBLIC_GEMINI_API_KEY to your environment variables.');
+    }
+
     const prompt = this.buildPrompt(request);
     
     try {
+      console.log('Generating carousel with Gemini API...');
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       
+      console.log('Gemini API response received');
       return this.parseCarouselResponse(text);
-    } catch (error) {
-      console.error('Error generating carousel:', error);
-      throw new Error('Failed to generate carousel content');
+    } catch (error: any) {
+      console.error('Detailed Gemini API error:', error);
+      
+      // Provide more specific error messages
+      if (error.message?.includes('API key')) {
+        throw new Error('Invalid API key. Please check your Google Gemini API key configuration.');
+      } else if (error.message?.includes('quota')) {
+        throw new Error('API quota exceeded. Please check your Google Cloud billing and quotas.');
+      } else if (error.message?.includes('403')) {
+        throw new Error('API access denied. Please ensure your API key has the correct permissions and billing is enabled.');
+      } else if (error.message?.includes('404')) {
+        throw new Error('Model not found. The Gemini model may not be available in your region.');
+      } else {
+        throw new Error(`Failed to generate carousel content: ${error.message || 'Unknown error'}`);
+      }
     }
   }
 
@@ -89,14 +109,14 @@ export class GeminiCarouselGenerator {
 - Number or bullet the items naturally in the content` : '';
 
     return `
-Create a high-engagement Instagram carousel about "${topic}" in ${mode} format with exactly ${slideCount} slides.
+Create a high-engagement Instagram and LinkedIn carousel about "${topic}" in ${mode} format with exactly ${slideCount} slides.
 
 TONE REQUIREMENTS:
 ${toneInstructions[tone]}
 
 CONTENT REQUIREMENTS:
 - ${modeInstructions[mode]}
-- Each slide should be highly engaging and Instagram-optimized
+- Each slide should be highly engaging and social media optimized
 - Include relevant, eye-catching emojis for each slide
 - Keep text concise but impactful (max 3-4 sentences per slide)
 - Use power words and emotional triggers
@@ -153,6 +173,7 @@ IMPORTANT: Make sure the JSON is valid and properly formatted. Focus on creating
       return slides.map((slide: any) => this.enhanceSlideFormatting(slide));
     } catch (error) {
       console.error('Error parsing carousel response:', error);
+      console.log('Raw response:', response);
       // Fallback: create slides from plain text
       return this.createFallbackSlides(response);
     }
@@ -193,13 +214,28 @@ IMPORTANT: Make sure the JSON is valid and properly formatted. Focus on creating
     const lines = text.split('\n').filter(line => line.trim());
     const slides: CarouselSlide[] = [];
     
-    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    // Create a basic carousel if API response parsing fails
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    const emojis = ['🚀', '💡', '📈', '✨', '🎯'];
+    
+    for (let i = 0; i < Math.min(lines.length, 5); i++) {
       slides.push({
         id: `slide-${i + 1}`,
         title: `Slide ${i + 1}`,
-        content: lines[i].trim(),
-        emoji: '📝',
-        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][i % 5]
+        content: lines[i].trim() || 'Add your content here...',
+        emoji: emojis[i % emojis.length],
+        backgroundColor: colors[i % colors.length]
+      });
+    }
+    
+    // If no content, create a default slide
+    if (slides.length === 0) {
+      slides.push({
+        id: 'slide-1',
+        title: 'Welcome to Your Carousel',
+        content: 'Start editing to create amazing content!',
+        emoji: '✨',
+        backgroundColor: '#FF6B6B'
       });
     }
     
@@ -207,15 +243,19 @@ IMPORTANT: Make sure the JSON is valid and properly formatted. Focus on creating
   }
 
   async optimizeHeadline(headline: string): Promise<string> {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+      return headline;
+    }
+
     const prompt = `
-Optimize this Instagram carousel headline for maximum engagement: "${headline}"
+Optimize this social media carousel headline for maximum engagement: "${headline}"
 
 Requirements:
 - Make it more compelling and click-worthy
 - Keep it under 125 characters
 - Use power words and emotional triggers (Transform, Discover, Master, Unlock, Proven, Secret, Ultimate)
 - Add emotional hooks (urgency, curiosity, benefit)
-- Make it Instagram-friendly with emojis where appropriate
+- Make it social media friendly with emojis where appropriate
 - Maintain the original meaning
 - Focus on benefits and outcomes
 
@@ -233,8 +273,12 @@ Return only the optimized headline, nothing else.
   }
 
   async enhanceSlideContent(content: string, tone: string): Promise<string> {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+      return content;
+    }
+
     const prompt = `
-Enhance this slide content for maximum Instagram engagement: "${content}"
+Enhance this slide content for maximum social media engagement: "${content}"
 
 Tone: ${tone}
 Requirements:
@@ -260,4 +304,4 @@ Return only the enhanced content, nothing else.
   }
 }
 
-export const geminiGenerator = new GeminiCarouselGenerator(); 
+export const geminiGenerator = new GeminiCarouselGenerator();

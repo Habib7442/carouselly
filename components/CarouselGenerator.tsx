@@ -10,7 +10,8 @@ import {
   TrendingUp, 
   Users,
   Wand2,
-  Lightbulb
+  Lightbulb,
+  AlertCircle
 } from 'lucide-react';
 import { geminiGenerator, CarouselRequest, CarouselSlide } from '@/lib/gemini';
 
@@ -92,17 +93,25 @@ export default function CarouselGenerator({ onGenerate, isGenerating, setIsGener
     slideCount: 7,
     tone: 'professional'
   });
+  const [error, setError] = useState<string>('');
 
   const handleGenerate = async () => {
-    if (!formData.topic.trim()) return;
+    if (!formData.topic.trim()) {
+      setError('Please enter a topic for your carousel');
+      return;
+    }
     
     setIsGenerating(true);
+    setError('');
+    
     try {
+      console.log('Starting carousel generation...');
       const slides = await geminiGenerator.generateCarousel(formData);
+      console.log('Carousel generated successfully:', slides);
       onGenerate(slides);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Generation failed:', error);
-      alert('Failed to generate carousel. Please try again.');
+      setError(error.message || 'Failed to generate carousel. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -110,6 +119,7 @@ export default function CarouselGenerator({ onGenerate, isGenerating, setIsGener
 
   const selectQuickPrompt = (prompt: string) => {
     setFormData(prev => ({ ...prev, topic: prompt }));
+    setError('');
   };
 
   return (
@@ -122,9 +132,25 @@ export default function CarouselGenerator({ onGenerate, isGenerating, setIsGener
           Carouselly AI Generator
         </h2>
         <p className="text-gray-600">
-          Create engaging Instagram carousels in seconds with AI
+          Create engaging Instagram and LinkedIn carousels in seconds with AI
         </p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-red-800">Generation Error</h4>
+            <p className="text-red-700 text-sm mt-1">{error}</p>
+            {error.includes('API key') && (
+              <p className="text-red-600 text-xs mt-2">
+                Make sure your Google Gemini API key is properly configured in your environment variables.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8">
         {/* Topic Input */}
@@ -134,7 +160,10 @@ export default function CarouselGenerator({ onGenerate, isGenerating, setIsGener
           </label>
           <textarea
             value={formData.topic}
-            onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+            onChange={(e) => {
+              setFormData(prev => ({ ...prev, topic: e.target.value }));
+              setError('');
+            }}
             placeholder="Enter your topic, idea, blog post content, or even paste a URL...
 
 Examples:
@@ -188,7 +217,7 @@ Examples:
                   </div>
                   <h3 className="font-semibold text-gray-800 mb-1">{mode.name}</h3>
                   <p className="text-sm text-gray-600 mb-2">{mode.description}</p>
-                  <p className="text-xs text-gray-500 italic">&quot;{mode.example}&quot;</p>
+                  <p className="text-xs text-gray-500 italic">"{mode.example}"</p>
                 </motion.button>
               );
             })}
@@ -280,8 +309,8 @@ Examples:
             <div className="inline-flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg mb-2">
               <Users className="h-5 w-5 text-green-600" />
             </div>
-            <h4 className="font-semibold text-gray-800 mb-1">Instagram Ready</h4>
-            <p className="text-sm text-gray-600">Perfect 1080x1080 format for maximum engagement</p>
+            <h4 className="font-semibold text-gray-800 mb-1">Multi-Platform</h4>
+            <p className="text-sm text-gray-600">Perfect for Instagram and LinkedIn</p>
           </div>
           
           <div className="text-center">
@@ -315,4 +344,4 @@ Examples:
       `}</style>
     </div>
   );
-} 
+}
