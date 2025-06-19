@@ -14,7 +14,9 @@ import {
   Play,
   ArrowRight,
   Sparkles,
-  Camera
+  Camera,
+  Star,
+  Zap
 } from 'lucide-react';
 import { CarouselSlide } from '@/lib/gemini';
 
@@ -193,12 +195,94 @@ const foodTemplate: CarouselSlide[] = [
   }
 ];
 
+const instagramUserTemplate: CarouselSlide[] = [
+  {
+    id: 'instagram-1',
+    title: 'Spotlight Starlet',
+    content: 'Bold layouts with dramatic lighting effects to highlight key moments and create stunning visual impact.',
+    emoji: '✨',
+    backgroundColor: `
+      radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(25, 25, 25, 0.9) 50%, rgba(0, 0, 0, 1) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  },
+  {
+    id: 'instagram-2',
+    title: 'Behind the Scenes',
+    content: 'Share your authentic moments with cinematic flair and professional polish.',
+    emoji: '🎬',
+    backgroundColor: `
+      radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 60% 70%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
+      linear-gradient(45deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  },
+  {
+    id: 'instagram-3',
+    title: 'Golden Hour Magic',
+    content: 'Capture the perfect lighting with warm tones and dramatic shadows.',
+    emoji: '🌅',
+    backgroundColor: `
+      radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+      linear-gradient(60deg, rgba(139, 69, 19, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  },
+  {
+    id: 'instagram-4',
+    title: 'Mood & Vibes',
+    content: 'Express your personality with bold colors and striking visual elements.',
+    emoji: '💫',
+    backgroundColor: `
+      radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(75, 0, 130, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  },
+  {
+    id: 'instagram-5',
+    title: 'Signature Style',
+    content: 'Develop your unique aesthetic with consistent visual branding.',
+    emoji: '🎨',
+    backgroundColor: `
+      radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 30, 0.95) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  },
+  {
+    id: 'instagram-6',
+    title: 'Follow My Journey',
+    content: 'Join me for more stunning content and behind-the-scenes moments.',
+    emoji: '⭐',
+    backgroundColor: `
+      radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 1) 100%)
+    `,
+    backgroundType: 'gradient',
+    template: 'instagram-user'
+  }
+];
+
 export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) {
   const [selectedImages, setSelectedImages] = useState<{[key: string]: string}>({});
-  const [selectedTemplate, setSelectedTemplate] = useState<'fitness' | 'business' | 'food'>('fitness');
-  const [previewSlide, setPreviewSlide] = useState<CarouselSlide>(fitnessTemplate[0]);
+  const [selectedTemplate, setSelectedTemplate] = useState<'fitness' | 'business' | 'food' | 'instagram-user'>('instagram-user');
+  const [previewSlide, setPreviewSlide] = useState<CarouselSlide>(instagramUserTemplate[0]);
 
   const templates = {
+    'instagram-user': instagramUserTemplate,
     fitness: fitnessTemplate,
     business: businessTemplate,
     food: foodTemplate
@@ -209,6 +293,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
   // Ensure preview slide updates when template changes
   useEffect(() => {
     const templateMap = {
+      'instagram-user': instagramUserTemplate,
       fitness: fitnessTemplate,
       business: businessTemplate,
       food: foodTemplate
@@ -282,6 +367,19 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      setSelectedTemplate('instagram-user');
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                      selectedTemplate === 'instagram-user'
+                        ? 'bg-purple-500 text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Star className="h-4 w-4" />
+                    Instagram User
+                  </button>
+                  <button
+                    onClick={() => {
                       setSelectedTemplate('fitness');
                     }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
@@ -336,22 +434,26 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
           <div className="bg-white rounded-3xl shadow-xl p-8">
             <div className="flex items-center gap-4 mb-8">
               <div className={`flex items-center justify-center w-16 h-16 rounded-2xl ${
+                selectedTemplate === 'instagram-user' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
                 selectedTemplate === 'fitness' ? 'bg-gradient-to-r from-green-500 to-blue-500' :
                 selectedTemplate === 'business' ? 'bg-gradient-to-r from-blue-500 to-purple-500' :
                 selectedTemplate === 'food' ? 'bg-gradient-to-r from-orange-500 to-red-500' :
                 'bg-gradient-to-r from-purple-500 to-pink-500'
               }`}>
+                {selectedTemplate === 'instagram-user' && <Star className="h-8 w-8 text-white" />}
                 {selectedTemplate === 'fitness' && <Dumbbell className="h-8 w-8 text-white" />}
                 {selectedTemplate === 'business' && <span className="text-2xl">📈</span>}
                 {selectedTemplate === 'food' && <span className="text-2xl">🍳</span>}
               </div>
               <div>
                 <h2 className="text-3xl font-bold text-gray-800">
+                  {selectedTemplate === 'instagram-user' && 'Instagram User'}
                   {selectedTemplate === 'fitness' && 'Fitness & Wellness'}
                   {selectedTemplate === 'business' && 'Business Growth'}
                   {selectedTemplate === 'food' && 'Food & Recipe'}
                 </h2>
                 <p className="text-gray-600">
+                  {selectedTemplate === 'instagram-user' && 'Perfect for influencers, content creators, and personal brands with dramatic lighting effects'}
                   {selectedTemplate === 'fitness' && 'Perfect for health coaches, fitness influencers, and wellness brands'}
                   {selectedTemplate === 'business' && 'Ideal for entrepreneurs, business coaches, and growth marketers'}
                   {selectedTemplate === 'food' && 'Great for food bloggers, chefs, and healthy eating advocates'}
@@ -371,27 +473,64 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                     <div 
                       className="w-full aspect-square max-w-sm mx-auto relative overflow-hidden rounded-2xl shadow-lg"
                       style={{ 
-                        background: selectedTemplate === 'food' 
-                          ? previewSlide.backgroundColor
-                          : previewSlide.backgroundColor 
+                        background: previewSlide.backgroundColor 
                       }}
                     >
                       {selectedImages[previewSlide.id] && (
                         <>
-                          {/* Base Image with Photoshoot Filters */}
+                          {/* Base Image with Instagram User Filters */}
                           <img 
                             src={selectedImages[previewSlide.id]} 
                             alt="Background" 
                             className="absolute inset-0 w-full h-full object-cover"
                             style={{
-                              opacity: selectedTemplate === 'food' ? 0.85 : 0.4,
-                              filter: selectedTemplate === 'food' 
-                                ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)' 
+                              opacity: selectedTemplate === 'instagram-user' ? 0.7 : 0.4,
+                              filter: selectedTemplate === 'instagram-user' 
+                                ? 'brightness(0.8) contrast(1.2) saturate(1.1)' 
                                 : 'none'
                             }}
                           />
+                          
+                          {/* Instagram User Dramatic Lighting Effects */}
+                          {selectedTemplate === 'instagram-user' && (
+                            <>
+                              {/* Key Light */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(ellipse 200px 300px at 50% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%),
+                                    radial-gradient(circle 150px at 30% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%)
+                                  `,
+                                  mixBlendMode: 'overlay'
+                                }}
+                              />
+                              
+                              {/* Dramatic Shadows */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.8) 100%)
+                                  `,
+                                  mixBlendMode: 'multiply'
+                                }}
+                              />
+                            </>
+                          )}
                         </>
                       )}
+                      
+                      {/* Content overlay with proper positioning */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6">
+                        <div className="text-4xl mb-4">{previewSlide.emoji}</div>
+                        <h3 className="text-xl font-bold text-center mb-3 leading-tight">
+                          {previewSlide.title}
+                        </h3>
+                        <p className="text-sm text-center leading-relaxed opacity-90">
+                          {previewSlide.content}
+                        </p>
+                      </div>
                     </div>
                     
                     {/* Navigation Arrows */}
@@ -442,13 +581,21 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                 <div className="text-center">
                   <p className="text-sm text-gray-600 mb-4">
                     {currentTemplate.length} professionally designed slides for {
+                      selectedTemplate === 'instagram-user' ? 'Instagram content creators and influencers' :
                       selectedTemplate === 'fitness' ? 'fitness and wellness content' :
                       selectedTemplate === 'business' ? 'business growth and entrepreneurship' :
                       selectedTemplate === 'food' ? 'food and recipe content' :
-                      'professional photoshoot content'
+                      'professional content'
                     }
                   </p>
                   <div className="flex justify-center gap-2 text-xs text-gray-500">
+                    {selectedTemplate === 'instagram-user' && (
+                      <>
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">Spotlight</span>
+                        <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded">Dramatic</span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">Cinematic</span>
+                      </>
+                    )}
                     {selectedTemplate === 'fitness' && (
                       <>
                         <span className="px-2 py-1 bg-green-100 text-green-700 rounded">Health Tips</span>
@@ -507,7 +654,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                           {slide.title || `Slide ${index + 1}`}
                         </p>
                         <p className="text-gray-500 text-xs">
-                          {selectedTemplate === 'food' ? 'Pure visual content' : `Slide ${index + 1}`} {previewSlide.id === slide.id && '• Currently Previewing'}
+                          {selectedTemplate === 'instagram-user' ? 'Dramatic lighting effects' : `Slide ${index + 1}`} {previewSlide.id === slide.id && '• Currently Previewing'}
                         </p>
                       </div>
                       <label className="cursor-pointer">
@@ -539,6 +686,26 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
 
             {/* Template Features */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {selectedTemplate === 'instagram-user' && (
+                <>
+                  <div className="text-center p-4 bg-purple-50 rounded-xl">
+                    <Star className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-purple-800">Spotlight</p>
+                  </div>
+                  <div className="text-center p-4 bg-pink-50 rounded-xl">
+                    <Zap className="h-8 w-8 text-pink-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-pink-800">Dramatic</p>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 rounded-xl">
+                    <Camera className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-yellow-800">Cinematic</p>
+                  </div>
+                  <div className="text-center p-4 bg-indigo-50 rounded-xl">
+                    <Sparkles className="h-8 w-8 text-indigo-600 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-indigo-800">Professional</p>
+                  </div>
+                </>
+              )}
               {selectedTemplate === 'fitness' && (
                 <>
                   <div className="text-center p-4 bg-green-50 rounded-xl">
@@ -606,6 +773,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
               <motion.button
                 onClick={() => applyTemplate(currentTemplate)}
                 className={`inline-flex items-center gap-3 px-8 py-4 text-white font-semibold rounded-xl transition-all shadow-lg ${
+                  selectedTemplate === 'instagram-user' ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' :
                   selectedTemplate === 'fitness' ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700' :
                   selectedTemplate === 'business' ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' :
                   selectedTemplate === 'food' ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700' :
@@ -652,4 +820,4 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
       </div>
     </div>
   );
-} 
+}
