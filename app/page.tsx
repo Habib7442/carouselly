@@ -2,15 +2,14 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Linkedin, Sparkles, Zap, Crown, Wand2, Edit3, Brain, Palette, Camera, TrendingUp, Users, Target, BarChart3, Rocket, Star, CheckCircle, ArrowRight } from 'lucide-react';
+import { Instagram, Linkedin, Sparkles, Zap, Crown, Wand2, Edit3, Brain, Palette, TrendingUp, Users, Target, BarChart3, Rocket, Star, CheckCircle, ArrowRight } from 'lucide-react';
 import CarouselGenerator from '@/components/CarouselGenerator';
 import ManualSlideCreator from '@/components/ManualSlideCreator';
 import TemplatesPage from '@/components/TemplatesPage';
-import ProfessionalPage from '@/components/ProfessionalPage';
 import { CarouselSlide } from '@/lib/gemini';
 import { useCarouselStore } from '@/lib/carousel-store';
 
-type CreationMode = 'ai' | 'manual' | 'edit' | 'templates' | 'professional';
+type CreationMode = 'ai' | 'manual' | 'edit' | 'templates';
 
 export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -166,8 +165,8 @@ export default function Home() {
 
         {/* Creation Mode Selection */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 border border-white/20 shadow-lg w-full max-w-5xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 border border-white/20 shadow-lg w-full max-w-4xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               <button
                 onClick={() => setCreationMode('templates')}
                 className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 rounded-xl font-medium transition-all ${
@@ -180,21 +179,6 @@ export default function Home() {
                 <div className="text-left min-w-0">
                   <div className="font-semibold text-sm sm:text-base truncate">Templates</div>
                   <div className="text-xs opacity-75 hidden sm:block">Professional designs</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setCreationMode('professional')}
-                className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 rounded-xl font-medium transition-all ${
-                  creationMode === 'professional'
-                    ? 'bg-white text-purple-700 shadow-md'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
-                }`}
-              >
-                <Camera className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                <div className="text-left min-w-0">
-                  <div className="font-semibold text-sm sm:text-base truncate">Professional</div>
-                  <div className="text-xs opacity-75 hidden sm:block">Photoshoot templates</div>
                 </div>
               </button>
 
@@ -257,12 +241,6 @@ export default function Home() {
         >
           {creationMode === 'templates' && (
             <TemplatesPage
-              onSelectTemplate={handleGenerate}
-            />
-          )}
-
-          {creationMode === 'professional' && (
-            <ProfessionalPage
               onSelectTemplate={handleGenerate}
             />
           )}
