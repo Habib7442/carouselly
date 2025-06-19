@@ -54,7 +54,8 @@ const emojis = [
 // Component for rendering formatted content with hashtag styling
 const FormattedContent = ({ content }: { content: string }) => {
   const formatContent = (text: string) => {
-    const parts = text.split(/(\s+)/);
+    // Split by hashtags and preserve them
+    const parts = text.split(/(#\w+)/g);
     return parts.map((part, index) => {
       if (part.startsWith('#')) {
         return (
@@ -159,13 +160,14 @@ function EditorPageContent() {
     try {
       const slide = currentSlideData;
       
+      // Use same size as preview (432x432) instead of 1080x1080
       const canvasElement = document.createElement('canvas');
-      canvasElement.width = 1080;
-      canvasElement.height = 1080;
+      canvasElement.width = 432;
+      canvasElement.height = 432;
       
       const canvas = new Canvas(canvasElement);
-      canvas.setWidth(1080);
-      canvas.setHeight(1080);
+      canvas.setWidth(432);
+      canvas.setHeight(432);
       canvas.backgroundColor = slide.backgroundColor || colors[currentSlide % colors.length];
       
       if (slide.backgroundImage) {
@@ -176,8 +178,8 @@ function EditorPageContent() {
             fabricImg.set({
               left: 0,
               top: 0,
-              scaleX: 1080 / fabricImg.width!,
-              scaleY: 1080 / fabricImg.height!,
+              scaleX: 432 / fabricImg.width!,
+              scaleY: 432 / fabricImg.height!,
               selectable: false
             });
             
@@ -241,17 +243,17 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 80; // Consistent padding
-    const canvasWidth = 1080;
-    const canvasHeight = 1080;
+    const padding = 32; // Scaled down padding for 432px canvas
+    const canvasWidth = 432;
+    const canvasHeight = 432;
     const contentWidth = canvasWidth - (padding * 2);
 
     // EMOJI - Position exactly like preview
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 160, // Match preview positioning
-        fontSize: 80, // Match preview size
+        top: 64, // Same as preview positioning
+        fontSize: 32, // Same as preview size
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
@@ -262,11 +264,10 @@ function EditorPageContent() {
 
     // TITLE - Position exactly like preview
     if (slide.title) {
-      const titleFontSize = 48; // Larger for better readability
+      const titleFontSize = 18; // Same as preview
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
       const titleLineHeight = titleFontSize * 1.2;
-      const totalTitleHeight = titleLines.length * titleLineHeight;
-      const titleStartY = 280; // Fixed position to match preview
+      const titleStartY = 112; // Same as preview
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -285,69 +286,22 @@ function EditorPageContent() {
       });
     }
 
-    // CONTENT - Position exactly like preview
+    // CONTENT - Position exactly like preview with proper hashtag handling
     if (slide.content) {
-      const contentFontSize = 24; // Larger for better readability
-      const contentLines = wrapText(slide.content, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-      const contentLineHeight = contentFontSize * 1.4;
-      const contentStartY = 480; // Fixed position to match preview
+      // Split content into main content and hashtags
+      const contentParts = slide.content.split(/(\s*#\w+(?:\s+#\w+)*\s*)$/);
+      const mainContent = contentParts[0]?.trim() || '';
+      const hashtagsPart = contentParts[1]?.trim() || '';
 
-      contentLines.forEach((line, index) => {
-        // Check if line contains hashtags for special styling
-        const hasHashtags = line.includes('#');
+      const contentFontSize = 12; // Same as preview
+      const contentLineHeight = contentFontSize * 1.4;
+      const contentStartY = 192; // Same as preview
+
+      // Add main content
+      if (mainContent) {
+        const contentLines = wrapText(mainContent, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
         
-        if (hasHashtags) {
-          // Split line into parts and render hashtags differently
-          const parts = line.split(/(\s+)/);
-          let currentX = canvasWidth / 2;
-          const lineY = contentStartY + (index * contentLineHeight);
-          
-          // Calculate total width to center the line
-          const tempCanvas = document.createElement('canvas');
-          const ctx = tempCanvas.getContext('2d');
-          if (ctx) {
-            ctx.font = `${contentFontSize}px ${slide.contentFontFamily || 'Inter'}`;
-            const totalWidth = ctx.measureText(line).width;
-            currentX = (canvasWidth - totalWidth) / 2;
-          }
-          
-          parts.forEach((part) => {
-            if (part.trim()) {
-              const isHashtag = part.startsWith('#');
-              const textColor = isHashtag ? '#3B82F6' : (slide.contentColor || '#FFFFFF'); // Bright blue for hashtags
-              
-              const textObj = new FabricText(part, {
-                left: currentX,
-                top: lineY,
-                fontSize: contentFontSize,
-                fontFamily: slide.contentFontFamily || 'Inter',
-                fill: textColor,
-                fontWeight: isHashtag ? 'bold' : 'normal',
-                originX: 'left',
-                originY: 'center',
-                selectable: false,
-                shadow: isHashtag ? new Shadow({
-                  color: 'rgba(0,0,0,0.5)',
-                  blur: 2,
-                  offsetX: 1,
-                  offsetY: 1
-                }) : undefined
-              });
-              
-              canvas.add(textObj);
-              currentX += textObj.width || 0;
-            } else {
-              // Add space width
-              const tempCanvas = document.createElement('canvas');
-              const ctx = tempCanvas.getContext('2d');
-              if (ctx) {
-                ctx.font = `${contentFontSize}px ${slide.contentFontFamily || 'Inter'}`;
-                currentX += ctx.measureText(' ').width;
-              }
-            }
-          });
-        } else {
-          // Regular text without hashtags
+        contentLines.forEach((line, index) => {
           const content = new FabricText(line, {
             left: canvasWidth / 2,
             top: contentStartY + (index * contentLineHeight),
@@ -360,8 +314,62 @@ function EditorPageContent() {
             selectable: false
           });
           canvas.add(content);
+        });
+
+        // Add hashtags on separate lines with proper spacing
+        if (hashtagsPart) {
+          const hashtagStartY = contentStartY + (contentLines.length * contentLineHeight) + 20; // Add extra spacing
+          const hashtags = hashtagsPart.split(/\s+/).filter(tag => tag.startsWith('#'));
+          
+          // Group hashtags into lines that fit
+          const hashtagLines: string[] = [];
+          let currentHashtagLine = '';
+          
+          hashtags.forEach(hashtag => {
+            const testLine = currentHashtagLine + (currentHashtagLine ? ' ' : '') + hashtag;
+            const tempCanvas = document.createElement('canvas');
+            const ctx = tempCanvas.getContext('2d');
+            if (ctx) {
+              ctx.font = `bold ${contentFontSize}px ${slide.contentFontFamily || 'Inter'}`;
+              const testWidth = ctx.measureText(testLine).width;
+              
+              if (testWidth > contentWidth && currentHashtagLine) {
+                hashtagLines.push(currentHashtagLine);
+                currentHashtagLine = hashtag;
+              } else {
+                currentHashtagLine = testLine;
+              }
+            }
+          });
+          
+          if (currentHashtagLine) {
+            hashtagLines.push(currentHashtagLine);
+          }
+
+          // Render hashtag lines
+          hashtagLines.forEach((line, index) => {
+            const hashtagText = new FabricText(line, {
+              left: canvasWidth / 2,
+              top: hashtagStartY + (index * contentLineHeight),
+              fontSize: contentFontSize,
+              fontFamily: slide.contentFontFamily || 'Inter',
+              fill: '#3B82F6', // Bright blue for hashtags
+              fontWeight: 'bold',
+              textAlign: 'center',
+              originX: 'center',
+              originY: 'center',
+              selectable: false,
+              shadow: new Shadow({
+                color: 'rgba(0,0,0,0.5)',
+                blur: 2,
+                offsetX: 1,
+                offsetY: 1
+              })
+            });
+            canvas.add(hashtagText);
+          });
         }
-      });
+      }
     }
   };
 
@@ -381,13 +389,14 @@ function EditorPageContent() {
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         
+        // Use same size as preview (432x432)
         const canvasElement = document.createElement('canvas');
-        canvasElement.width = 1080;
-        canvasElement.height = 1080;
+        canvasElement.width = 432;
+        canvasElement.height = 432;
         
         const canvas = new Canvas(canvasElement);
-        canvas.setWidth(1080);
-        canvas.setHeight(1080);
+        canvas.setWidth(432);
+        canvas.setHeight(432);
         canvas.backgroundColor = slide.backgroundColor || colors[i % colors.length];
         
         addTextToCanvas(canvas, slide);
@@ -609,10 +618,12 @@ function EditorPageContent() {
                         value={currentSlideData.content || ''}
                         onChange={(e) => updateSlide(currentSlideData.id, { content: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-24 resize-none"
-                        placeholder="Enter slide content"
+                        placeholder="Enter slide content. Add hashtags at the end for proper formatting."
                       />
                       <div className="mt-1 text-xs text-gray-500">
                         {(currentSlideData.content || '').length} characters
+                        <br />
+                        💡 Tip: Add hashtags at the end of your content for proper line breaks
                       </div>
                     </div>
                     
@@ -799,7 +810,12 @@ function EditorPageContent() {
         {/* Right Side - Slide Preview */}
         <div className="flex-1 flex items-center justify-center p-8 bg-gray-100">
           <div className="relative">
-            {/* Smaller Preview - 1080x1080 scaled to 40% (432x432) */}
+            {/* Preview size indicator */}
+            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              Preview & Download Size: 432×432px
+            </div>
+            
+            {/* Preview - 432x432 (same as download size) */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -807,8 +823,8 @@ function EditorPageContent() {
               transition={{ duration: 0.3 }}
               className="relative mt-4"
               style={{
-                width: '432px', // Reduced from 540px
-                height: '432px', // Reduced from 540px
+                width: '432px',
+                height: '432px',
               }}
             >
               <div
@@ -903,7 +919,7 @@ function EditorPageContent() {
                   {currentSlideData.emoji && (
                     <div 
                       className="absolute text-3xl"
-                      style={{ top: '64px' }} // 160/2.5 = 64px (scaled down from canvas)
+                      style={{ top: '64px' }} // Same as canvas positioning
                     >
                       {currentSlideData.emoji}
                     </div>
@@ -913,7 +929,7 @@ function EditorPageContent() {
                     <h2
                       className="absolute text-lg font-bold text-center w-full px-6 leading-tight"
                       style={{
-                        top: '112px', // 280/2.5 = 112px (scaled down from canvas)
+                        top: '112px', // Same as canvas positioning
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -930,7 +946,7 @@ function EditorPageContent() {
                     <div
                       className="absolute text-xs w-full px-6 leading-relaxed"
                       style={{
-                        top: '192px', // 480/2.5 = 192px (scaled down from canvas)
+                        top: '192px', // Same as canvas positioning
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
