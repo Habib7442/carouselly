@@ -816,19 +816,15 @@ function EditorPageContent() {
         </div>
 
         {/* Right Side - Slide Preview */}
-        <div className="flex-1 flex items-center justify-center p-8 bg-gray-100">
-          <div className="relative">
-            {/* Preview - Properly fitted 540x540 (scaled down from 1080x1080) */}
+        <div className="flex-1 flex items-center justify-center p-6 bg-gray-100 overflow-hidden">
+          <div className="relative max-w-md w-full">
+            {/* Preview - Properly contained and sized */}
             <motion.div
               key={currentSlide}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}
-              className="relative"
-              style={{
-                width: '540px',
-                height: '540px',
-              }}
+              className="relative w-full aspect-square max-w-sm mx-auto"
             >
               <div
                 className="w-full h-full shadow-2xl relative overflow-hidden rounded-lg"
@@ -918,12 +914,12 @@ function EditorPageContent() {
                 )}
                 
                 {/* Content Layer - EXACT POSITIONING TO MATCH CANVAS */}
-                <div className="absolute inset-0 flex flex-col items-center text-white" style={{ padding: '30px' }}>
+                <div className="absolute inset-0 flex flex-col items-center text-white" style={{ padding: '15px' }}>
                   {currentSlideData.emoji && (
                     <div 
-                      className="absolute text-4xl"
+                      className="absolute text-2xl"
                       style={{ 
-                        top: '60px', // Scaled for 540px preview (120px / 2)
+                        top: '30px', // Scaled for preview (60px / 2)
                         left: '50%',
                         transform: 'translateX(-50%)'
                       }}
@@ -934,12 +930,12 @@ function EditorPageContent() {
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute text-2xl font-bold text-center leading-tight"
+                      className="absolute text-lg font-bold text-center leading-tight"
                       style={{
-                        top: '110px', // Scaled for 540px preview (220px / 2)
+                        top: '55px', // Scaled for preview (110px / 2)
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        width: 'calc(100% - 60px)', // Account for padding
+                        width: 'calc(100% - 30px)', // Account for padding
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -954,19 +950,19 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute text-sm leading-relaxed"
+                      className="absolute text-xs leading-relaxed"
                       style={{
-                        top: '190px', // Scaled for 540px preview (380px / 2)
+                        top: '95px', // Scaled for preview (190px / 2)
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        width: 'calc(100% - 60px)', // Account for padding
+                        width: 'calc(100% - 30px)', // Account for padding
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
                         wordWrap: 'break-word',
                         overflowWrap: 'break-word',
                         hyphens: 'auto',
-                        maxHeight: '280px', // Scaled max height
+                        maxHeight: '140px', // Scaled max height
                         overflow: 'hidden'
                       }}
                     >
@@ -975,12 +971,12 @@ function EditorPageContent() {
                   )}
                 </div>
               </div>
-              
-              {/* Slide indicator */}
-              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-                {currentSlide + 1} of {slides.length}
-              </div>
             </motion.div>
+            
+            {/* Slide indicator */}
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+              {currentSlide + 1} of {slides.length}
+            </div>
           </div>
         </div>
       </div>
