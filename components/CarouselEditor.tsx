@@ -71,8 +71,10 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
     if (slides.length > 0 && storeSlides.length === 0) {
       const slidesWithColors = slides.map((slide, index) => ({
         ...slide,
-        backgroundColor: slide.backgroundColor || colors[index % colors.length]
+        backgroundColor: slide.backgroundColor || colors[index % colors.length],
+        template: slide.template || 'regular' // Ensure template is preserved
       }));
+
       setSlides(slidesWithColors);
     }
   }, [slides, storeSlides.length, setSlides]);
@@ -165,17 +167,37 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
   const duplicateSlide = (slideId: string) => duplicateSlideInStore(slideId);
   const updateSlide = (slideId: string, updates: Partial<CarouselSlide>) => updateSlideInStore(slideId, updates);
 
+  // Helper functions to get position values with defaults
+  const getTitlePositionX = (slide: CarouselSlide) => {
+    return slide.textPositionX ? parseInt(slide.textPositionX) : 50;
+  };
+
+  const getTitlePositionY = (slide: CarouselSlide) => {
+    return slide.textPositionY ? parseInt(slide.textPositionY) : 50;
+  };
+
+  const getImagePositionX = (slide: CarouselSlide) => {
+    return slide.backgroundImageX ? parseInt(slide.backgroundImageX) : 50;
+  };
+
+  const getImagePositionY = (slide: CarouselSlide) => {
+    return slide.backgroundImageY ? parseInt(slide.backgroundImageY) : 50;
+  };
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageUrl = e.target?.result as string;
+        // Preserve existing template or determine based on current slide
+        const currentTemplate = slidesWithColors[currentSlide]?.template || 'regular';
+
         updateSlide(slidesWithColors[currentSlide].id, {
           backgroundImage: imageUrl,
           backgroundType: 'image',
           gradient: undefined,
-          template: 'regular' // Default to regular template for uploaded images
+          template: currentTemplate // Preserve the existing template
         });
       };
       reader.readAsDataURL(file);
@@ -335,9 +357,9 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
           });
         }
         
-        // Optimized text positioning and sizing for 1080x1080
-        const centerX = 540;
-        const centerY = 540;
+        // Use user's position settings for download
+        const titlePosX = getTitlePositionX(slide);
+        const titlePosY = getTitlePositionY(slide);
         const maxTextWidth = 650; // Leave 215px padding on each side to better match preview spacing
         
         // Calculate responsive font sizes based on content length
@@ -349,13 +371,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
         const contentFontSize = contentLength > 150 ? 18 : contentLength > 100 ? 22 : contentLength > 80 ? 24 : 26;
         const emojiSize = 65;
         
-        let currentY = centerY - 200; // Start higher for better spacing
+        // Convert percentage to pixel positions for 1080x1080 canvas
+        const positionX = (titlePosX * 1080) / 100;
+        const positionY = (titlePosY * 1080) / 100;
         
-        // Add emoji with proper sizing
+        // Add emoji with user positioning
         if (slide.emoji) {
+          const emojiX = ((titlePosX - 10) * 1080) / 100; // Emoji offset
+          const emojiY = ((titlePosY - 10) * 1080) / 100;
+          
           const emoji = new FabricText(slide.emoji, {
-            left: centerX,
-            top: currentY,
+            left: emojiX,
+            top: emojiY,
             fontSize: emojiSize,
             textAlign: 'center',
             originX: 'center',
@@ -364,10 +391,9 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
             fontFamily: 'Arial'
           });
           canvas.add(emoji);
-          currentY += emojiSize + 25;
         }
         
-        // Add title with proper sizing and wrapping
+        // Add title with user positioning
         if (slide.title) {
           const cleanTitle = slide.title.replace(/\s*[🎯🚀💪📈⚡💡🔥✨🎪🌟]+\s*$/, '');
           
@@ -376,8 +402,8 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
           
           // Create title with text wrapping
           const titleText = new FabricText(truncatedTitle, {
-            left: centerX,
-            top: currentY,
+            left: positionX,
+            top: positionY,
             fontSize: titleFontSize,
             fontWeight: 'bold',
             fill: slide.titleColor || '#FFFFFF',
@@ -397,20 +423,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
           });
           
           canvas.add(titleText);
-          
-          // Calculate actual height of wrapped text
-          const titleHeight = titleText.calcTextHeight();
-          currentY += Math.max(titleHeight, titleFontSize) + 35;
         }
         
-        // Add content with proper sizing and wrapping
+        // Add content with user positioning (below title)
         if (slide.content) {
           // Truncate content if too long to ensure it fits
           const truncatedContent = slide.content.length > 200 ? slide.content.substring(0, 197) + '...' : slide.content;
           
+          const contentY = positionY + (titleFontSize * 1.5); // Content below title
+          
           const contentText = new FabricText(truncatedContent, {
-            left: centerX,
-            top: currentY,
+            left: positionX,
+            top: contentY,
             fontSize: contentFontSize,
             fill: slide.textColor || '#FFFFFF',
             fontFamily: 'Arial',
@@ -611,9 +635,9 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
               });
             }
             
-            // Optimized text positioning and sizing for 1080x1080
-            const centerX = 540;
-            const centerY = 540;
+            // Use user's position settings for download
+            const titlePosX = getTitlePositionX(slide);
+            const titlePosY = getTitlePositionY(slide);
             const maxTextWidth = 650; // Leave 215px padding on each side to better match preview spacing
             
             // Calculate responsive font sizes based on content length
@@ -625,13 +649,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
             const contentFontSize = contentLength > 150 ? 18 : contentLength > 100 ? 22 : contentLength > 80 ? 24 : 26;
             const emojiSize = 80;
             
-            let currentY = centerY - 180; // Start higher for better spacing
+            // Convert percentage to pixel positions for 1080x1080 canvas
+            const positionX = (titlePosX * 1080) / 100;
+            const positionY = (titlePosY * 1080) / 100;
             
-            // Add emoji with proper sizing
+            // Add emoji with user positioning
             if (slide.emoji) {
+              const emojiX = ((titlePosX - 10) * 1080) / 100; // Emoji offset
+              const emojiY = ((titlePosY - 10) * 1080) / 100;
+              
               const emoji = new FabricText(slide.emoji, {
-                left: centerX,
-                top: currentY,
+                left: emojiX,
+                top: emojiY,
                 fontSize: emojiSize,
                 textAlign: 'center',
                 originX: 'center',
@@ -640,10 +669,9 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                 fontFamily: 'Arial'
               });
               canvas.add(emoji);
-              currentY += emojiSize + 20;
             }
             
-            // Add title with proper sizing and wrapping
+            // Add title with user positioning
             if (slide.title) {
               const cleanTitle = slide.title.replace(/\s*[🎯🚀💪📈⚡💡🔥✨🎪🌟]+\s*$/, '');
               
@@ -652,8 +680,8 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
               
               // Create title with text wrapping
               const titleText = new FabricText(truncatedTitle, {
-                left: centerX,
-                top: currentY,
+                left: positionX,
+                top: positionY,
                 fontSize: titleFontSize,
                 fontWeight: 'bold',
                 fill: slide.titleColor || '#FFFFFF',
@@ -673,20 +701,18 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
               });
               
               canvas.add(titleText);
-              
-              // Calculate actual height of wrapped text
-              const titleHeight = titleText.calcTextHeight();
-              currentY += Math.max(titleHeight, titleFontSize) + 30;
             }
             
-            // Add content with proper sizing and wrapping
+            // Add content with user positioning (below title)
             if (slide.content) {
               // Truncate content if too long to ensure it fits
               const truncatedContent = slide.content.length > 200 ? slide.content.substring(0, 197) + '...' : slide.content;
               
+              const contentY = positionY + (titleFontSize * 1.5); // Content below title
+              
               const contentText = new FabricText(truncatedContent, {
-                left: centerX,
-                top: currentY,
+                left: positionX,
+                top: contentY,
                 fontSize: contentFontSize,
                 fill: slide.textColor || '#FFFFFF',
                 fontFamily: 'Arial',
@@ -794,7 +820,13 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
     fontFamily: slide.titleFontFamily || 'var(--font-inter), Inter, Arial, sans-serif',
     fontSize: slide.titleFontSize || '2rem',
     textAlign: slide.titleAlign || 'center' as const,
-    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    position: 'absolute' as const,
+    left: `${getTitlePositionX(slide)}%`,
+    top: `${getTitlePositionY(slide)}%`,
+    transform: 'translate(-50%, -50%)',
+    width: '80%',
+    zIndex: 20
   });
 
   const getContentStyle = (slide: CarouselSlide) => ({
@@ -802,7 +834,13 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
     fontFamily: slide.fontFamily || 'var(--font-inter), Inter, Arial, sans-serif',
     fontSize: slide.fontSize || '1.1rem',
     textAlign: slide.textAlign || 'center' as const,
-    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+    position: 'absolute' as const,
+    left: `${getTitlePositionX(slide)}%`,
+    top: `${getTitlePositionY(slide) + 15}%`, // Content below title
+    transform: 'translate(-50%, -50%)',
+    width: '80%',
+    zIndex: 19
   });
 
 
@@ -926,9 +964,16 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                             ? `${slidesWithColors[currentSlide].backgroundImageX} ${slidesWithColors[currentSlide].backgroundImageY}`
                             : slidesWithColors[currentSlide]?.backgroundImagePosition || 'center',
                           backgroundRepeat: 'no-repeat',
-                          opacity: slidesWithColors[currentSlide]?.template === 'photoshoot' ? 0.85 : (slidesWithColors[currentSlide]?.backgroundImageOpacity || 0.6),
+                          opacity: slidesWithColors[currentSlide]?.template === 'photoshoot' ? 0.85 : 
+                                  slidesWithColors[currentSlide]?.template === 'instagram-user' ? 0.75 :
+                                  slidesWithColors[currentSlide]?.template === 'cinema-chic' ? 0.7 :
+                                  (slidesWithColors[currentSlide]?.backgroundImageOpacity || 0.6),
                           filter: slidesWithColors[currentSlide]?.template === 'photoshoot' 
                             ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)' 
+                            : slidesWithColors[currentSlide]?.template === 'instagram-user'
+                            ? 'brightness(0.7) contrast(1.3) saturate(1.2) sepia(0.1) hue-rotate(10deg)'
+                            : slidesWithColors[currentSlide]?.template === 'cinema-chic'
+                            ? 'brightness(0.6) contrast(1.4) saturate(0.9) sepia(0.2) hue-rotate(10deg) grayscale(0.1)'
                             : 'none'
                         }}
                       />
@@ -1015,8 +1060,139 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                         </>
                       )}
 
-                      {/* User-Selected Overlay - For NON-Photoshoot Templates */}
-                      {slidesWithColors[currentSlide]?.template !== 'photoshoot' && (
+                      {/* Instagram User Enhanced Dramatic Lighting Effects */}
+                      {slidesWithColors[currentSlide]?.template === 'instagram-user' && (
+                        <>
+                          {/* Primary Spotlight */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse 250px 400px at 50% 25%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 215, 0, 0.1) 30%, transparent 70%),
+                                radial-gradient(circle 200px at 30% 70%, rgba(255, 20, 147, 0.15) 0%, transparent 60%),
+                                radial-gradient(circle 150px at 70% 30%, rgba(138, 43, 226, 0.1) 0%, transparent 50%)
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                          
+                          {/* Film Grain Texture */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                repeating-linear-gradient(
+                                  90deg,
+                                  transparent,
+                                  transparent 2px,
+                                  rgba(255, 255, 255, 0.03) 2px,
+                                  rgba(255, 255, 255, 0.03) 4px
+                                ),
+                                repeating-linear-gradient(
+                                  0deg,
+                                  transparent,
+                                  transparent 2px,
+                                  rgba(0, 0, 0, 0.03) 2px,
+                                  rgba(0, 0, 0, 0.03) 4px
+                                )
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                          
+                          {/* Enhanced Vignette and Shadows */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.6) 90%, rgba(0, 0, 0, 0.9) 100%),
+                                linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.3) 100%)
+                              `,
+                              mixBlendMode: 'multiply'
+                            }}
+                          />
+                          
+                          {/* Color Grading Overlay */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                linear-gradient(45deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 20, 147, 0.05) 50%, rgba(138, 43, 226, 0.05) 100%)
+                              `,
+                              mixBlendMode: 'soft-light'
+                            }}
+                          />
+                        </>
+                      )}
+
+                      {/* Cinema Chic Vintage Hollywood Effects */}
+                      {slidesWithColors[currentSlide]?.template === 'cinema-chic' && (
+                        <>
+                          {/* Classic Hollywood Key Light */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse 300px 400px at 50% 30%, rgba(255, 215, 0, 0.15) 0%, rgba(218, 165, 32, 0.1) 40%, transparent 70%),
+                                radial-gradient(circle 180px at 35% 60%, rgba(184, 134, 11, 0.08) 0%, transparent 50%),
+                                radial-gradient(circle 120px at 65% 40%, rgba(255, 228, 181, 0.12) 0%, transparent 60%)
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                          
+                          {/* Film Noir Shadows and Contrast */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.8) 95%),
+                                linear-gradient(45deg, rgba(0, 0, 0, 0.3) 0%, transparent 40%, transparent 60%, rgba(0, 0, 0, 0.4) 100%)
+                              `,
+                              mixBlendMode: 'multiply'
+                            }}
+                          />
+                          
+                          {/* Vintage Golden Glow */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(circle at 50% 40%, rgba(218, 165, 32, 0.1) 0%, rgba(184, 134, 11, 0.05) 30%, transparent 60%),
+                                linear-gradient(60deg, rgba(139, 69, 19, 0.05) 0%, rgba(160, 82, 45, 0.03) 50%, transparent 100%)
+                              `,
+                              mixBlendMode: 'soft-light'
+                            }}
+                          />
+                          
+                          {/* Classic Cinema Texture */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                repeating-linear-gradient(
+                                  90deg,
+                                  transparent,
+                                  transparent 3px,
+                                  rgba(255, 215, 0, 0.02) 3px,
+                                  rgba(255, 215, 0, 0.02) 6px
+                                ),
+                                repeating-linear-gradient(
+                                  0deg,
+                                  transparent,
+                                  transparent 3px,
+                                  rgba(0, 0, 0, 0.04) 3px,
+                                  rgba(0, 0, 0, 0.04) 6px
+                                )
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                        </>
+                      )}
+
+                      {/* User-Selected Overlay - For NON-Photoshoot, NON-Instagram-User, and NON-Cinema-Chic Templates */}
+                      {slidesWithColors[currentSlide]?.template !== 'photoshoot' && slidesWithColors[currentSlide]?.template !== 'instagram-user' && slidesWithColors[currentSlide]?.template !== 'cinema-chic' && (
                         <div 
                           className="absolute inset-0"
                           style={{
@@ -1027,27 +1203,17 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                       )}
                     </>
                   )}
-                  <div 
-                    className="absolute inset-0 p-3 sm:p-6 lg:p-8"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}
-                  >
+                  <div className="absolute inset-0 p-3 sm:p-6 lg:p-8">
+                    {/* Emoji positioned absolutely */}
                     <div 
-                      className="text-center"
+                      className="absolute text-2xl sm:text-3xl lg:text-4xl"
                       style={{
-                        position: 'absolute',
-                        left: slidesWithColors[currentSlide]?.textPositionX || '50%',
-                        top: slidesWithColors[currentSlide]?.textPositionY || '50%',
+                        left: `${getTitlePositionX(slidesWithColors[currentSlide]) - 10}%`,
+                        top: `${getTitlePositionY(slidesWithColors[currentSlide]) - 10}%`,
                         transform: 'translate(-50%, -50%)',
-                        width: '60%', /* 650px/1080px ≈ 60% to match download image text width */
-                        maxWidth: '100%'
+                        zIndex: 21
                       }}
                     >
-                    <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4">
                       {slidesWithColors[currentSlide]?.emoji}
                     </div>
                     
@@ -1075,16 +1241,15 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                         </button>
                       </div>
                     ) : (
-                      <div className="text-white">
-                        <h2 className="text-sm sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 leading-tight px-2" style={getTitleStyle(slidesWithColors[currentSlide])}>
+                      <>
+                        <h2 className="text-sm sm:text-lg lg:text-xl font-bold leading-tight" style={getTitleStyle(slidesWithColors[currentSlide])}>
                           {slidesWithColors[currentSlide]?.title?.replace(/\s*[🎯🚀💪📈⚡💡🔥✨🎪🌟]+\s*$/, '')}
                         </h2>
-                        <p className="text-xs sm:text-sm lg:text-base leading-relaxed px-2" style={getContentStyle(slidesWithColors[currentSlide])}>
+                        <p className="text-xs sm:text-sm lg:text-base leading-relaxed" style={getContentStyle(slidesWithColors[currentSlide])}>
                           {slidesWithColors[currentSlide]?.content}
                         </p>
-                      </div>
+                      </>
                     )}
-                    </div>
                   </div>
                   
                   {!isPreviewMode && !isDownloadingPreview && !isDownloadingZip && (
@@ -1125,9 +1290,16 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                             ? `${slide.backgroundImageX} ${slide.backgroundImageY}`
                             : slide.backgroundImagePosition || 'center',
                           backgroundRepeat: 'no-repeat',
-                          opacity: slide.template === 'photoshoot' ? 0.85 : (slide.backgroundImageOpacity || 0.6),
+                          opacity: slide.template === 'photoshoot' ? 0.85 : 
+                                  slide.template === 'instagram-user' ? 0.75 :
+                                  slide.template === 'cinema-chic' ? 0.7 :
+                                  (slide.backgroundImageOpacity || 0.6),
                           filter: slide.template === 'photoshoot' 
-                            ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)' 
+                            ? 'brightness(0.6) contrast(1.3) saturate(0.8) sepia(0.15) hue-rotate(15deg)'
+                            : slide.template === 'instagram-user'
+                            ? 'brightness(0.7) contrast(1.3) saturate(1.2) sepia(0.1) hue-rotate(10deg)'
+                            : slide.template === 'cinema-chic'
+                            ? 'brightness(0.6) contrast(1.4) saturate(0.9) sepia(0.2) hue-rotate(10deg) grayscale(0.1)'
                             : 'none'
                         }}
                       />
@@ -1191,8 +1363,42 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                         </>
                       )}
 
-                      {/* User-Selected Overlay - For NON-Photoshoot Templates */}
-                      {slide.template !== 'photoshoot' && (
+                      {/* Instagram User Effects for Thumbnails */}
+                      {slide.template === 'instagram-user' && (
+                        <>
+                          {/* Simplified Instagram User Effects for Thumbnails */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse at center, rgba(255, 215, 0, 0.1) 0%, rgba(255, 20, 147, 0.05) 50%, transparent 80%),
+                                radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.8) 100%)
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                        </>
+                      )}
+
+                      {/* Cinema Chic Effects for Thumbnails */}
+                      {slide.template === 'cinema-chic' && (
+                        <>
+                          {/* Simplified Cinema Chic Effects for Thumbnails */}
+                          <div 
+                            className="absolute inset-0"
+                            style={{
+                              background: `
+                                radial-gradient(ellipse at center, rgba(255, 215, 0, 0.08) 0%, rgba(218, 165, 32, 0.05) 40%, transparent 70%),
+                                radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.5) 70%, rgba(0, 0, 0, 0.8) 100%)
+                              `,
+                              mixBlendMode: 'overlay'
+                            }}
+                          />
+                        </>
+                      )}
+
+                      {/* User-Selected Overlay - For NON-Photoshoot, NON-Instagram-User, and NON-Cinema-Chic Templates */}
+                      {slide.template !== 'photoshoot' && slide.template !== 'instagram-user' && slide.template !== 'cinema-chic' && (
                         <div 
                           className="absolute inset-0"
                           style={{
@@ -1459,6 +1665,70 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                 Typography
               </h3>
               <div className="space-y-6">
+                {/* Text Position Control - Move to Top */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                    📍 Text Position Control
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-purple-700 mb-2">Horizontal Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            textPositionX: `${e.target.value}%`,
+                            textPositionY: slidesWithColors[currentSlide]?.textPositionY || '50%'
+                          })}
+                          className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                          style={{
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                          {slidesWithColors[currentSlide]?.textPositionX || '50%'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-purple-700 mb-2">Vertical Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            textPositionY: `${e.target.value}%`,
+                            textPositionX: slidesWithColors[currentSlide]?.textPositionX || '50%'
+                          })}
+                          className="flex-1 h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer slider-purple"
+                          style={{
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb ${parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-purple-700 min-w-[3rem] text-center bg-purple-100 px-2 py-1 rounded">
+                          {slidesWithColors[currentSlide]?.textPositionY || '50%'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
+                        textPositionX: '50%',
+                        textPositionY: '50%'
+                      })}
+                      className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                    >
+                      Reset to Center
+                    </button>
+                  </div>
+                </div>
+
                 {/* Title Typography */}
                 <div className="border-b border-gray-200 pb-4">
                   <h4 className="font-semibold text-gray-800 mb-3">Title Formatting</h4>
@@ -1572,61 +1842,7 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                   </div>
                 </div>
 
-                {/* Text Position Control */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="font-semibold text-gray-800 mb-3">Text Position Control</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Horizontal Position</label>
-                      <div className="flex gap-2 items-center">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={parseInt((slidesWithColors[currentSlide]?.textPositionX || '50').replace('%', ''))}
-                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
-                            textPositionX: `${e.target.value}%`,
-                            textPositionY: slidesWithColors[currentSlide]?.textPositionY || '50%'
-                          })}
-                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="text-xs text-gray-500 min-w-[3rem] text-center">
-                          {slidesWithColors[currentSlide]?.textPositionX || '50%'}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Vertical Position</label>
-                      <div className="flex gap-2 items-center">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={parseInt((slidesWithColors[currentSlide]?.textPositionY || '50').replace('%', ''))}
-                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
-                            textPositionY: `${e.target.value}%`,
-                            textPositionX: slidesWithColors[currentSlide]?.textPositionX || '50%'
-                          })}
-                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="text-xs text-gray-500 min-w-[3rem] text-center">
-                          {slidesWithColors[currentSlide]?.textPositionY || '50%'}
-                        </div>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => updateSlide(slidesWithColors[currentSlide].id, { 
-                        textPositionX: '50%',
-                        textPositionY: '50%'
-                      })}
-                      className="w-full py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                    >
-                      Reset to Center
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -1786,6 +2002,28 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                         <div className="font-medium">Photoshoot</div>
                         <div className="text-xs text-gray-500">Pro lighting</div>
                       </button>
+                      <button
+                        onClick={() => updateSlide(slidesWithColors[currentSlide].id, { template: 'instagram-user' })}
+                        className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                          slidesWithColors[currentSlide]?.template === 'instagram-user'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-medium">Instagram User</div>
+                        <div className="text-xs text-gray-500">Social effects</div>
+                      </button>
+                      <button
+                        onClick={() => updateSlide(slidesWithColors[currentSlide].id, { template: 'cinema-chic' })}
+                        className={`p-3 text-sm rounded-lg border-2 transition-colors ${
+                          slidesWithColors[currentSlide]?.template === 'cinema-chic'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-medium">Cinema Chic</div>
+                        <div className="text-xs text-gray-500">Hollywood style</div>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1808,6 +2046,62 @@ export default function CarouselEditor({ slides, onSlidesChange, isGenerating }:
                 >
                   Remove Emoji
                 </button>
+              )}
+              
+              {/* Emoji Position Controls */}
+              {slidesWithColors[currentSlide]?.emoji && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                    😊 Emoji Position
+                  </h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-yellow-700 mb-2">Horizontal Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={getTitlePositionX(slidesWithColors[currentSlide]) - 10} // Emoji offset
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            textPositionX: `${parseInt(e.target.value) + 10}%`,
+                            textPositionY: slidesWithColors[currentSlide]?.textPositionY || '50%'
+                          })}
+                          className="flex-1 h-3 bg-yellow-200 rounded-lg appearance-none cursor-pointer"
+                          style={{
+                            background: `linear-gradient(to right, #eab308 0%, #eab308 ${getTitlePositionX(slidesWithColors[currentSlide]) - 10}%, #e5e7eb ${getTitlePositionX(slidesWithColors[currentSlide]) - 10}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-yellow-700 min-w-[3rem] text-center bg-yellow-100 px-2 py-1 rounded">
+                          {getTitlePositionX(slidesWithColors[currentSlide]) - 10}%
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-yellow-700 mb-2">Vertical Position</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={getTitlePositionY(slidesWithColors[currentSlide]) - 10} // Emoji offset
+                          onChange={(e) => updateSlide(slidesWithColors[currentSlide].id, { 
+                            textPositionY: `${parseInt(e.target.value) + 10}%`,
+                            textPositionX: slidesWithColors[currentSlide]?.textPositionX || '50%'
+                          })}
+                          className="flex-1 h-3 bg-yellow-200 rounded-lg appearance-none cursor-pointer"
+                          style={{
+                            background: `linear-gradient(to right, #eab308 0%, #eab308 ${getTitlePositionY(slidesWithColors[currentSlide]) - 10}%, #e5e7eb ${getTitlePositionY(slidesWithColors[currentSlide]) - 10}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="text-sm font-medium text-yellow-700 min-w-[3rem] text-center bg-yellow-100 px-2 py-1 rounded">
+                          {getTitlePositionY(slidesWithColors[currentSlide]) - 10}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
               
               {/* Emoji Grid */}

@@ -631,21 +631,28 @@ function EditorPageContent() {
   };
 
   const getSlideStyle = (slide: CarouselSlide) => {
+    // Determine the actual background type
+    const actualBackgroundType = slide.backgroundType || 
+      (slide.gradient ? 'gradient' : 
+       slide.backgroundImage ? 'image' : 'color');
+    
     const baseStyle: React.CSSProperties = {
-      backgroundColor: slide.backgroundColor || colors[currentSlide % colors.length],
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat'
     };
 
-    if (slide.backgroundType === 'gradient' && slide.gradient) {
+    if (actualBackgroundType === 'gradient' && slide.gradient) {
+      // For gradients, only set the background image
       baseStyle.backgroundImage = slide.gradient;
-      baseStyle.backgroundColor = undefined;
-    } else if (slide.backgroundType === 'image' && slide.backgroundImage) {
+    } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
+      // For images, set all background properties individually
       baseStyle.backgroundImage = `url(${slide.backgroundImage})`;
-      baseStyle.backgroundColor = undefined;
       baseStyle.backgroundSize = slide.imageFit || 'cover';
       baseStyle.backgroundPosition = slide.imagePosition || 'center';
+    } else {
+      // For solid colors, only set background color
+      baseStyle.backgroundColor = slide.backgroundColor || colors[currentSlide % colors.length];
+      baseStyle.backgroundSize = 'cover';
+      baseStyle.backgroundPosition = 'center';
     }
 
     return baseStyle;

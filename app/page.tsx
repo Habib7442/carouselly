@@ -20,7 +20,7 @@ export default function Home() {
 
   const handleGenerate = (newSlides: CarouselSlide[]) => {
     console.log('Template selected:', newSlides.length, 'slides');
-    console.log('First slide:', newSlides[0]);
+    console.log('Slides with templates:', newSlides.map(s => ({ id: s.id, template: s.template, title: s.title })));
     
     // Set slides in Zustand store so editor can access them
     setSlides(newSlides);

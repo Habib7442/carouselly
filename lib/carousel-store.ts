@@ -146,11 +146,14 @@ export const useCarouselStore = create<CarouselState>()(
       ...slide,
       backgroundColor: slide.backgroundColor || colors[index % colors.length],
       backgroundType: slide.backgroundType || (slide.gradient ? 'gradient' : slide.backgroundImage ? 'image' : 'color'),
-      id: slide.id || `slide-${Date.now()}-${index}` // Ensure each slide has an ID
+      id: slide.id || `slide-${Date.now()}-${index}`, // Ensure each slide has an ID
+      template: slide.template || 'regular' // Preserve template information
     }));
     
     // Restore complex backgrounds from storage if needed
     const restoredSlides = slidesWithColors.map(restoreSlideFromStorage);
+    
+    console.log('Setting slides with templates:', restoredSlides.map(s => ({ id: s.id, template: s.template })));
     
     set({ slides: restoredSlides });
   },
@@ -220,8 +223,14 @@ export const useCarouselStore = create<CarouselState>()(
   updateSlide: (slideId, updates) => {
     const { slides } = get();
     const newSlides = slides.map(slide => 
-      slide.id === slideId ? { ...slide, ...updates } : slide
+      slide.id === slideId ? { 
+        ...slide, 
+        ...updates,
+        // Preserve template unless explicitly being updated
+        template: updates.template !== undefined ? updates.template : slide.template
+      } : slide
     );
+    console.log('Updating slide:', slideId, 'with template:', newSlides.find(s => s.id === slideId)?.template);
     set({ slides: newSlides });
   },
   

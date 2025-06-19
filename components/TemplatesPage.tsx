@@ -195,6 +195,69 @@ const foodTemplate: CarouselSlide[] = [
   }
 ];
 
+const cinemaChicTemplate: CarouselSlide[] = [
+  {
+    id: 'cinema-1',
+    title: 'Cinema Chic Collection',
+    content: 'Classic Hollywood vintage style with timeless elegance and film reel accents.',
+    emoji: '🎬',
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)`,
+    template: 'cinema-chic'
+  },
+  {
+    id: 'cinema-2',
+    title: 'Golden Era Glamour',
+    content: 'Inspired by the sophistication of 1940s Hollywood with modern cinematic flair.',
+    emoji: '🎭',
+    backgroundColor: '#2d1810',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #2d1810 0%, #8b6f47 50%, #2d1810 100%)`,
+    template: 'cinema-chic'
+  },
+  {
+    id: 'cinema-3',
+    title: 'Film Noir Vibes',
+    content: 'Dramatic shadows and vintage aesthetics create that perfect cinematic atmosphere.',
+    emoji: '🎞️',
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 30%, #1a1a1a 100%)`,
+    template: 'cinema-chic'
+  },
+  {
+    id: 'cinema-4',
+    title: 'Vintage Spotlight',
+    content: 'Classic film techniques meet modern storytelling in this elegant design collection.',
+    emoji: '🎪',
+    backgroundColor: '#4a3728',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #4a3728 0%, #d4af37 50%, #4a3728 100%)`,
+    template: 'cinema-chic'
+  },
+  {
+    id: 'cinema-5',
+    title: 'Reel Magic',
+    content: 'Every frame tells a story. Capture the essence of classic cinema in your content.',
+    emoji: '📽️',
+    backgroundColor: '#2c2c2c',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #2c2c2c 0%, #8b8680 50%, #2c2c2c 100%)`,
+    template: 'cinema-chic'
+  },
+  {
+    id: 'cinema-6',
+    title: 'Follow for More!',
+    content: 'Join our vintage cinema community for daily classic Hollywood inspiration.',
+    emoji: '⭐',
+    backgroundColor: '#1a1a1a',
+    backgroundType: 'gradient',
+    gradient: `linear-gradient(135deg, #1a1a1a 0%, #d4af37 25%, #1a1a1a 75%, #d4af37 100%)`,
+    template: 'cinema-chic'
+  }
+];
+
 const instagramUserTemplate: CarouselSlide[] = [
   {
     id: 'instagram-1',
@@ -284,14 +347,15 @@ const instagramUserTemplate: CarouselSlide[] = [
 
 export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) {
   const [selectedImages, setSelectedImages] = useState<{[key: string]: string}>({});
-  const [selectedTemplate, setSelectedTemplate] = useState<'fitness' | 'business' | 'food' | 'instagram-user'>('instagram-user');
+  const [selectedTemplate, setSelectedTemplate] = useState<'fitness' | 'business' | 'food' | 'instagram-user' | 'cinema-chic'>('instagram-user');
   const [previewSlide, setPreviewSlide] = useState<CarouselSlide>(instagramUserTemplate[0]);
 
   const templates = {
     'instagram-user': instagramUserTemplate,
     fitness: fitnessTemplate,
     business: businessTemplate,
-    food: foodTemplate
+    food: foodTemplate,
+    'cinema-chic': cinemaChicTemplate
   };
 
   const currentTemplate = templates[selectedTemplate];
@@ -302,7 +366,8 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
       'instagram-user': instagramUserTemplate,
       fitness: fitnessTemplate,
       business: businessTemplate,
-      food: foodTemplate
+      food: foodTemplate,
+      'cinema-chic': cinemaChicTemplate
     };
     
     const newTemplate = templateMap[selectedTemplate];
@@ -353,24 +418,33 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
       contentAlign: slide.contentAlign || 'center'
     }));
     
-    console.log('Applying template:', updatedTemplate);
+    console.log('Applying template with templates:', updatedTemplate.map(s => ({ id: s.id, template: s.template, title: s.title })));
     onSelectTemplate(updatedTemplate);
   };
 
   const getSlideStyle = (slide: CarouselSlide) => {
+    // Determine the actual background type
+    const actualBackgroundType = slide.backgroundType || 
+      (slide.gradient ? 'gradient' : 
+       slide.backgroundImage ? 'image' : 'color');
+    
     const baseStyle: React.CSSProperties = {
-      backgroundColor: slide.backgroundColor || '#1a1a1a',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat'
     };
 
-    if (slide.backgroundType === 'gradient' && slide.gradient) {
-      baseStyle.background = slide.gradient;
-    } else if (slide.backgroundType === 'image' && slide.backgroundImage) {
+    if (actualBackgroundType === 'gradient' && slide.gradient) {
+      // For gradients, only set the background image
+      baseStyle.backgroundImage = slide.gradient;
+    } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
+      // For images, set all background properties individually
       baseStyle.backgroundImage = `url(${slide.backgroundImage})`;
       baseStyle.backgroundSize = slide.imageFit || 'cover';
       baseStyle.backgroundPosition = slide.imagePosition || 'center';
+    } else {
+      // For solid colors, only set background color
+      baseStyle.backgroundColor = slide.backgroundColor || '#1a1a1a';
+      baseStyle.backgroundSize = 'cover';
+      baseStyle.backgroundPosition = 'center';
     }
 
     return baseStyle;
@@ -452,6 +526,19 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                     🍳
                     Food & Recipe
                   </button>
+                  <button
+                    onClick={() => {
+                      setSelectedTemplate('cinema-chic');
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                      selectedTemplate === 'cinema-chic'
+                        ? 'bg-yellow-600 text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                  >
+                    🎬
+                    Cinema Chic
+                  </button>
                 </div>
               </div>
             </div>
@@ -473,12 +560,14 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                 selectedTemplate === 'fitness' ? 'bg-gradient-to-r from-green-500 to-blue-500' :
                 selectedTemplate === 'business' ? 'bg-gradient-to-r from-blue-500 to-purple-500' :
                 selectedTemplate === 'food' ? 'bg-gradient-to-r from-orange-500 to-red-500' :
+                selectedTemplate === 'cinema-chic' ? 'bg-gradient-to-r from-yellow-600 to-yellow-800' :
                 'bg-gradient-to-r from-purple-500 to-pink-500'
               }`}>
                 {selectedTemplate === 'instagram-user' && <Star className="h-8 w-8 text-white" />}
                 {selectedTemplate === 'fitness' && <Dumbbell className="h-8 w-8 text-white" />}
                 {selectedTemplate === 'business' && <span className="text-2xl">📈</span>}
                 {selectedTemplate === 'food' && <span className="text-2xl">🍳</span>}
+                {selectedTemplate === 'cinema-chic' && <span className="text-2xl">🎬</span>}
               </div>
               <div>
                 <h2 className="text-3xl font-bold text-gray-800">
@@ -486,12 +575,14 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                   {selectedTemplate === 'fitness' && 'Fitness & Wellness'}
                   {selectedTemplate === 'business' && 'Business Growth'}
                   {selectedTemplate === 'food' && 'Food & Recipe'}
+                  {selectedTemplate === 'cinema-chic' && 'Cinema Chic'}
                 </h2>
                 <p className="text-gray-600">
                   {selectedTemplate === 'instagram-user' && 'Perfect for influencers, content creators, and personal brands with dramatic lighting effects'}
                   {selectedTemplate === 'fitness' && 'Perfect for health coaches, fitness influencers, and wellness brands'}
                   {selectedTemplate === 'business' && 'Ideal for entrepreneurs, business coaches, and growth marketers'}
                   {selectedTemplate === 'food' && 'Great for food bloggers, chefs, and healthy eating advocates'}
+                  {selectedTemplate === 'cinema-chic' && 'Classic Hollywood vintage style with timeless elegance and film reel accents'}
                 </p>
               </div>
             </div>
@@ -511,42 +602,148 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                     >
                       {selectedImages[previewSlide.id] && (
                         <>
-                          {/* Base Image with Instagram User Filters */}
+                          {/* Base Image with Enhanced Filters */}
                           <img 
                             src={selectedImages[previewSlide.id]} 
                             alt="Background" 
                             className="absolute inset-0 w-full h-full object-cover"
                             style={{
-                              opacity: selectedTemplate === 'instagram-user' ? 0.7 : 0.4,
+                              opacity: selectedTemplate === 'instagram-user' ? 0.75 : 
+                                      selectedTemplate === 'cinema-chic' ? 0.7 : 0.4,
                               filter: selectedTemplate === 'instagram-user' 
-                                ? 'brightness(0.8) contrast(1.2) saturate(1.1)' 
+                                ? 'brightness(0.7) contrast(1.3) saturate(1.2) sepia(0.1) hue-rotate(10deg)'
+                                : selectedTemplate === 'cinema-chic'
+                                ? 'brightness(0.6) contrast(1.4) saturate(0.9) sepia(0.2) hue-rotate(10deg) grayscale(0.1)'
                                 : 'none'
                             }}
                           />
                           
-                          {/* Instagram User Dramatic Lighting Effects */}
+                          {/* Instagram User Enhanced Dramatic Lighting Effects */}
                           {selectedTemplate === 'instagram-user' && (
                             <>
-                              {/* Key Light */}
+                              {/* Primary Spotlight */}
                               <div 
                                 className="absolute inset-0"
                                 style={{
                                   background: `
-                                    radial-gradient(ellipse 200px 300px at 50% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%),
-                                    radial-gradient(circle 150px at 30% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%)
+                                    radial-gradient(ellipse 250px 400px at 50% 25%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 215, 0, 0.1) 30%, transparent 70%),
+                                    radial-gradient(circle 200px at 30% 70%, rgba(255, 20, 147, 0.15) 0%, transparent 60%),
+                                    radial-gradient(circle 150px at 70% 30%, rgba(138, 43, 226, 0.1) 0%, transparent 50%)
                                   `,
                                   mixBlendMode: 'overlay'
                                 }}
                               />
                               
-                              {/* Dramatic Shadows */}
+                              {/* Film Grain Texture */}
                               <div 
                                 className="absolute inset-0"
                                 style={{
                                   background: `
-                                    radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.8) 100%)
+                                    repeating-linear-gradient(
+                                      90deg,
+                                      transparent,
+                                      transparent 2px,
+                                      rgba(255, 255, 255, 0.03) 2px,
+                                      rgba(255, 255, 255, 0.03) 4px
+                                    ),
+                                    repeating-linear-gradient(
+                                      0deg,
+                                      transparent,
+                                      transparent 2px,
+                                      rgba(0, 0, 0, 0.03) 2px,
+                                      rgba(0, 0, 0, 0.03) 4px
+                                    )
+                                  `,
+                                  mixBlendMode: 'overlay'
+                                }}
+                              />
+                              
+                              {/* Enhanced Vignette and Shadows */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.6) 90%, rgba(0, 0, 0, 0.9) 100%),
+                                    linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.3) 100%)
                                   `,
                                   mixBlendMode: 'multiply'
+                                }}
+                              />
+                              
+                              {/* Color Grading Overlay */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    linear-gradient(45deg, rgba(255, 215, 0, 0.05) 0%, rgba(255, 20, 147, 0.05) 50%, rgba(138, 43, 226, 0.05) 100%)
+                                  `,
+                                  mixBlendMode: 'soft-light'
+                                }}
+                              />
+                            </>
+                          )}
+
+                          {/* Cinema Chic Vintage Hollywood Effects */}
+                          {selectedTemplate === 'cinema-chic' && (
+                            <>
+                              {/* Classic Hollywood Key Light */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(ellipse 300px 400px at 50% 30%, rgba(255, 215, 0, 0.15) 0%, rgba(218, 165, 32, 0.1) 40%, transparent 70%),
+                                    radial-gradient(circle 180px at 35% 60%, rgba(184, 134, 11, 0.08) 0%, transparent 50%),
+                                    radial-gradient(circle 120px at 65% 40%, rgba(255, 228, 181, 0.12) 0%, transparent 60%)
+                                  `,
+                                  mixBlendMode: 'overlay'
+                                }}
+                              />
+                              
+                              {/* Film Noir Shadows and Contrast */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(ellipse at center, transparent 25%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.8) 95%),
+                                    linear-gradient(45deg, rgba(0, 0, 0, 0.3) 0%, transparent 40%, transparent 60%, rgba(0, 0, 0, 0.4) 100%)
+                                  `,
+                                  mixBlendMode: 'multiply'
+                                }}
+                              />
+                              
+                              {/* Vintage Golden Glow */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    radial-gradient(circle at 50% 40%, rgba(218, 165, 32, 0.1) 0%, rgba(184, 134, 11, 0.05) 30%, transparent 60%),
+                                    linear-gradient(60deg, rgba(139, 69, 19, 0.05) 0%, rgba(160, 82, 45, 0.03) 50%, transparent 100%)
+                                  `,
+                                  mixBlendMode: 'soft-light'
+                                }}
+                              />
+                              
+                              {/* Classic Cinema Texture */}
+                              <div 
+                                className="absolute inset-0"
+                                style={{
+                                  background: `
+                                    repeating-linear-gradient(
+                                      90deg,
+                                      transparent,
+                                      transparent 3px,
+                                      rgba(255, 215, 0, 0.02) 3px,
+                                      rgba(255, 215, 0, 0.02) 6px
+                                    ),
+                                    repeating-linear-gradient(
+                                      0deg,
+                                      transparent,
+                                      transparent 3px,
+                                      rgba(0, 0, 0, 0.04) 3px,
+                                      rgba(0, 0, 0, 0.04) 6px
+                                    )
+                                  `,
+                                  mixBlendMode: 'overlay'
                                 }}
                               />
                             </>
@@ -795,6 +992,26 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                   </div>
                 </>
               )}
+              {selectedTemplate === 'cinema-chic' && (
+                <>
+                  <div className="text-center p-4 bg-yellow-50 rounded-xl">
+                    <span className="text-2xl mx-auto mb-2 block">🎬</span>
+                    <p className="text-sm font-medium text-yellow-800">Classic Cinema</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-xl">
+                    <span className="text-2xl mx-auto mb-2 block">🎞️</span>
+                    <p className="text-sm font-medium text-gray-800">Film Noir</p>
+                  </div>
+                  <div className="text-center p-4 bg-yellow-50 rounded-xl">
+                    <span className="text-2xl mx-auto mb-2 block">⭐</span>
+                    <p className="text-sm font-medium text-yellow-800">Hollywood</p>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-xl">
+                    <span className="text-2xl mx-auto mb-2 block">🎭</span>
+                    <p className="text-sm font-medium text-gray-800">Vintage Vibes</p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Use Template Button */}
@@ -806,6 +1023,7 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
                   selectedTemplate === 'fitness' ? 'bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700' :
                   selectedTemplate === 'business' ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' :
                   selectedTemplate === 'food' ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700' :
+                  selectedTemplate === 'cinema-chic' ? 'bg-gradient-to-r from-yellow-600 to-yellow-800 hover:from-yellow-700 hover:to-yellow-900' :
                   'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
                 }`}
                 whileHover={{ scale: 1.02 }}
