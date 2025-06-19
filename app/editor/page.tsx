@@ -241,16 +241,17 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 100; // Better padding for text containment
+    const padding = 80; // Consistent padding
     const canvasWidth = 1080;
     const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
 
+    // EMOJI - Position exactly like preview
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 140, // Moved up slightly
-        fontSize: 80,
+        top: 160, // Match preview positioning
+        fontSize: 80, // Match preview size
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
@@ -259,17 +260,18 @@ function EditorPageContent() {
       canvas.add(emoji);
     }
 
+    // TITLE - Position exactly like preview
     if (slide.title) {
-      const titleFontSize = 36; // Reduced from 44 to prevent overflow
+      const titleFontSize = 48; // Larger for better readability
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      const titleLineHeight = titleFontSize * 1.1; // Reduced line height
+      const titleLineHeight = titleFontSize * 1.2;
       const totalTitleHeight = titleLines.length * titleLineHeight;
-      const startY = 300 - (totalTitleHeight / 2); // Adjusted position
+      const titleStartY = 280; // Fixed position to match preview
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
           left: canvasWidth / 2,
-          top: startY + (index * titleLineHeight),
+          top: titleStartY + (index * titleLineHeight),
           fontSize: titleFontSize,
           fontFamily: slide.titleFontFamily || 'Inter',
           fill: slide.titleColor || '#FFFFFF',
@@ -283,12 +285,12 @@ function EditorPageContent() {
       });
     }
 
+    // CONTENT - Position exactly like preview
     if (slide.content) {
-      const contentFontSize = 18; // Reduced from 22
+      const contentFontSize = 24; // Larger for better readability
       const contentLines = wrapText(slide.content, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-      const contentLineHeight = contentFontSize * 1.3;
-      const totalContentHeight = contentLines.length * contentLineHeight;
-      const startY = 520 - (totalContentHeight / 2); // Adjusted position
+      const contentLineHeight = contentFontSize * 1.4;
+      const contentStartY = 480; // Fixed position to match preview
 
       contentLines.forEach((line, index) => {
         // Check if line contains hashtags for special styling
@@ -298,7 +300,7 @@ function EditorPageContent() {
           // Split line into parts and render hashtags differently
           const parts = line.split(/(\s+)/);
           let currentX = canvasWidth / 2;
-          const lineY = startY + (index * contentLineHeight);
+          const lineY = contentStartY + (index * contentLineHeight);
           
           // Calculate total width to center the line
           const tempCanvas = document.createElement('canvas');
@@ -348,7 +350,7 @@ function EditorPageContent() {
           // Regular text without hashtags
           const content = new FabricText(line, {
             left: canvasWidth / 2,
-            top: startY + (index * contentLineHeight),
+            top: contentStartY + (index * contentLineHeight),
             fontSize: contentFontSize,
             fontFamily: slide.contentFontFamily || 'Inter',
             fill: slide.contentColor || '#FFFFFF',
@@ -797,11 +799,6 @@ function EditorPageContent() {
         {/* Right Side - Slide Preview */}
         <div className="flex-1 flex items-center justify-center p-8 bg-gray-100">
           <div className="relative">
-            {/* Download size indicator */}
-            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              Preview (Exact Download Size: 1080×1080px)
-            </div>
-            
             {/* Smaller Preview - 1080x1080 scaled to 40% (432x432) */}
             <motion.div
               key={currentSlide}
@@ -901,16 +898,22 @@ function EditorPageContent() {
                   </>
                 )}
                 
-                {/* Content Layer */}
+                {/* Content Layer - EXACT POSITIONING TO MATCH CANVAS */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8">
                   {currentSlideData.emoji && (
-                    <div className="absolute top-12 text-3xl">{currentSlideData.emoji}</div>
+                    <div 
+                      className="absolute text-3xl"
+                      style={{ top: '64px' }} // 160/2.5 = 64px (scaled down from canvas)
+                    >
+                      {currentSlideData.emoji}
+                    </div>
                   )}
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute top-24 text-lg font-bold text-center w-full px-6 leading-tight"
+                      className="absolute text-lg font-bold text-center w-full px-6 leading-tight"
                       style={{
+                        top: '112px', // 280/2.5 = 112px (scaled down from canvas)
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
                         textAlign: currentSlideData.titleAlign || 'center',
@@ -925,8 +928,9 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute top-40 text-xs w-full px-6 leading-relaxed"
+                      className="absolute text-xs w-full px-6 leading-relaxed"
                       style={{
+                        top: '192px', // 480/2.5 = 192px (scaled down from canvas)
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
                         textAlign: currentSlideData.contentAlign || 'center',
