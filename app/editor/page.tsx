@@ -454,6 +454,22 @@ function EditorPageContent() {
     return baseStyle;
   };
 
+  // Helper function to split content and hashtags for preview
+  const splitContentAndHashtags = (content: string) => {
+    const hashtagMatches = content.match(/#\w+/g);
+    let mainContent = content;
+    let hashtags = '';
+    
+    if (hashtagMatches) {
+      hashtagMatches.forEach(hashtag => {
+        mainContent = mainContent.replace(hashtag, '').trim();
+      });
+      hashtags = hashtagMatches.join(' ');
+    }
+    
+    return { mainContent: mainContent.trim(), hashtags };
+  };
+
   if (!currentSlideData) {
     return <div>Loading...</div>;
   }
@@ -948,27 +964,53 @@ function EditorPageContent() {
                     </h2>
                   )}
                   
-                  {currentSlideData.content && (
-                    <div
-                      className="absolute text-xs leading-relaxed"
-                      style={{
-                        top: '95px', // Scaled for preview (190px / 2)
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: 'calc(100% - 30px)', // Account for padding
-                        fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
-                        color: currentSlideData.contentColor || '#FFFFFF',
-                        textAlign: currentSlideData.contentAlign || 'center',
-                        wordWrap: 'break-word',
-                        overflowWrap: 'break-word',
-                        hyphens: 'auto',
-                        maxHeight: '140px', // Scaled max height
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <FormattedContent content={currentSlideData.content} />
-                    </div>
-                  )}
+                  {currentSlideData.content && (() => {
+                    const { mainContent, hashtags } = splitContentAndHashtags(currentSlideData.content);
+                    return (
+                      <>
+                        {/* Main Content */}
+                        {mainContent && (
+                          <div
+                            className="absolute text-xs leading-relaxed"
+                            style={{
+                              top: '95px', // Scaled for preview (190px / 2)
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: 'calc(100% - 30px)', // Account for padding
+                              fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
+                              color: currentSlideData.contentColor || '#FFFFFF',
+                              textAlign: currentSlideData.contentAlign || 'center',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              hyphens: 'auto'
+                            }}
+                          >
+                            {mainContent}
+                          </div>
+                        )}
+                        
+                        {/* Hashtags */}
+                        {hashtags && (
+                          <div
+                            className="absolute text-xs font-bold leading-relaxed"
+                            style={{
+                              top: '140px', // Positioned below main content
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: 'calc(100% - 30px)', // Account for padding
+                              fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
+                              color: '#000000', // Black color for hashtags
+                              textAlign: 'center',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word'
+                            }}
+                          >
+                            {hashtags}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </motion.div>
