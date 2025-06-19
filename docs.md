@@ -12,7 +12,7 @@ Carouselly – Instagram Carousel Generator SaaS Blueprint
 - AI-suggested icons, emojis, or images
 - Stock image integration
 - Text + image overlays
-🎯 Carousel Optimizer
+🎯 Carousel Optimizerr
 - Headline scoring
 - AI suggestions for stronger copy
 - Watermark branding toggle
