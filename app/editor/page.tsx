@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile, AlignLeft, AlignCenter, AlignRight, Move, RotateCcw } from 'lucide-react';
 import { Canvas, FabricImage, Rect, Circle, FabricText, Shadow } from 'fabric';
 import { zip } from 'fflate';
 import { saveAs } from 'file-saver';
@@ -609,7 +609,7 @@ function EditorPageContent() {
                 >
                   <div className="flex items-center gap-2">
                     <Type className="h-4 w-4 text-gray-600" />
-                    <span className="font-medium text-gray-700">Content</span>
+                    <span className="font-medium text-gray-700">Content & Typography</span>
                   </div>
                   <motion.div
                     animate={{ rotate: showFontPanel ? 180 : 0 }}
@@ -621,77 +621,192 @@ function EditorPageContent() {
                 
                 {showFontPanel && (
                   <div className="p-3 border-t border-gray-200 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        value={currentSlideData.title || ''}
-                        onChange={(e) => updateSlide(currentSlideData.id, { title: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        placeholder="Enter slide title"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Content
-                      </label>
-                      <textarea
-                        value={currentSlideData.content || ''}
-                        onChange={(e) => updateSlide(currentSlideData.id, { content: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-24 resize-none"
-                        placeholder="Enter slide content. Add hashtags at the end for proper formatting."
-                      />
-                      <div className="mt-1 text-xs text-gray-500">
-                        {(currentSlideData.content || '').length} characters
-                        <br />
-                        💡 Tip: Add hashtags at the end of your content for proper line breaks
+                    {/* Title Section */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-800 border-b pb-1">Title</h4>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Title Text
+                        </label>
+                        <input
+                          type="text"
+                          value={currentSlideData.title || ''}
+                          onChange={(e) => updateSlide(currentSlideData.id, { title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Enter slide title"
+                        />
+                      </div>
+                      
+                      {/* Title Alignment */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Title Alignment
+                        </label>
+                        <div className="flex gap-1">
+                          {[
+                            { value: 'left', icon: AlignLeft, label: 'Left' },
+                            { value: 'center', icon: AlignCenter, label: 'Center' },
+                            { value: 'right', icon: AlignRight, label: 'Right' }
+                          ].map(({ value, icon: Icon, label }) => (
+                            <button
+                              key={value}
+                              onClick={() => updateSlide(currentSlideData.id, { titleAlign: value as any })}
+                              className={`flex-1 p-2 rounded border text-xs flex items-center justify-center gap-1 ${
+                                (currentSlideData.titleAlign || 'center') === value
+                                  ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                              }`}
+                              title={label}
+                            >
+                              <Icon className="h-3 w-3" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Title Font Family */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Title Font
+                        </label>
+                        <select
+                          value={currentSlideData.titleFontFamily || fontFamilies[0].value}
+                          onChange={(e) => updateSlide(currentSlideData.id, { titleFontFamily: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                        >
+                          {fontFamilies.map((font) => (
+                            <option key={font.name} value={font.value}>
+                              {font.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Title Color */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Title Color
+                        </label>
+                        <div className="grid grid-cols-6 gap-1">
+                          {textColors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => updateSlide(currentSlideData.id, { titleColor: color })}
+                              className={`w-6 h-6 rounded border-2 ${
+                                (currentSlideData.titleColor || '#FFFFFF') === color
+                                  ? 'border-gray-800'
+                                  : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Font Family
-                      </label>
-                      <select
-                        value={currentSlideData.titleFontFamily || fontFamilies[0].value}
-                        onChange={(e) => updateSlide(currentSlideData.id, { 
-                          titleFontFamily: e.target.value,
-                          contentFontFamily: e.target.value 
+                    {/* Content Section */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-800 border-b pb-1">Content</h4>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Content Text
+                        </label>
+                        <textarea
+                          value={currentSlideData.content || ''}
+                          onChange={(e) => updateSlide(currentSlideData.id, { content: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-24 resize-none"
+                          placeholder="Enter slide content. Add hashtags at the end for proper formatting."
+                        />
+                        <div className="mt-1 text-xs text-gray-500">
+                          {(currentSlideData.content || '').length} characters
+                          <br />
+                          💡 Tip: Add hashtags at the end of your content for proper line breaks
+                        </div>
+                      </div>
+
+                      {/* Content Alignment */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Content Alignment
+                        </label>
+                        <div className="flex gap-1">
+                          {[
+                            { value: 'left', icon: AlignLeft, label: 'Left' },
+                            { value: 'center', icon: AlignCenter, label: 'Center' },
+                            { value: 'right', icon: AlignRight, label: 'Right' }
+                          ].map(({ value, icon: Icon, label }) => (
+                            <button
+                              key={value}
+                              onClick={() => updateSlide(currentSlideData.id, { contentAlign: value as any })}
+                              className={`flex-1 p-2 rounded border text-xs flex items-center justify-center gap-1 ${
+                                (currentSlideData.contentAlign || 'center') === value
+                                  ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                              }`}
+                              title={label}
+                            >
+                              <Icon className="h-3 w-3" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Content Font Family */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Content Font
+                        </label>
+                        <select
+                          value={currentSlideData.contentFontFamily || fontFamilies[0].value}
+                          onChange={(e) => updateSlide(currentSlideData.id, { contentFontFamily: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                        >
+                          {fontFamilies.map((font) => (
+                            <option key={font.name} value={font.value}>
+                              {font.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Content Color */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Content Color
+                        </label>
+                        <div className="grid grid-cols-6 gap-1">
+                          {textColors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => updateSlide(currentSlideData.id, { contentColor: color })}
+                              className={`w-6 h-6 rounded border-2 ${
+                                (currentSlideData.contentColor || '#FFFFFF') === color
+                                  ? 'border-gray-800'
+                                  : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reset Button */}
+                    <div className="pt-2 border-t">
+                      <button
+                        onClick={() => updateSlide(currentSlideData.id, {
+                          titleAlign: 'center',
+                          contentAlign: 'center',
+                          titleFontFamily: fontFamilies[0].value,
+                          contentFontFamily: fontFamilies[0].value,
+                          titleColor: '#FFFFFF',
+                          contentColor: '#FFFFFF'
                         })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
                       >
-                        {fontFamilies.map((font) => (
-                          <option key={font.name} value={font.value}>
-                            {font.name} - {font.preview}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Text Color
-                      </label>
-                      <div className="grid grid-cols-6 gap-2">
-                        {textColors.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => updateSlide(currentSlideData.id, { 
-                              titleColor: color,
-                              contentColor: color 
-                            })}
-                            className={`w-8 h-8 rounded-md border-2 ${
-                              (currentSlideData.titleColor || '#FFFFFF') === color
-                                ? 'border-gray-800'
-                                : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
+                        <RotateCcw className="h-3 w-3" />
+                        Reset Typography
+                      </button>
                     </div>
                   </div>
                 )}
