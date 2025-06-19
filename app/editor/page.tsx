@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile } from 'lucide-react';
 import { Canvas, FabricImage, Rect, Circle, FabricText, Shadow } from 'fabric';
 import { zip } from 'fflate';
@@ -80,9 +80,8 @@ const FormattedContent = ({ content }: { content: string }) => {
   );
 };
 
-export default function EditorPage() {
+function EditorPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDownloadingPreview, setIsDownloadingPreview] = React.useState(false);
@@ -935,5 +934,26 @@ export default function EditorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function EditorLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading editor...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<EditorLoading />}>
+      <EditorPageContent />
+    </Suspense>
   );
 }
