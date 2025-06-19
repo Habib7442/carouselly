@@ -276,84 +276,120 @@ const instagramUserTemplate: CarouselSlide[] = [
     title: 'Spotlight Starlet',
     content: 'Bold layouts with dramatic lighting effects to highlight key moments and create stunning visual impact.',
     emoji: '✨',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(25, 25, 25, 0.9) 50%, rgba(0, 0, 0, 1) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
       linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(25, 25, 25, 0.9) 50%, rgba(0, 0, 0, 1) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'instagram-2',
     title: 'Behind the Scenes',
     content: 'Share your authentic moments with cinematic flair and professional polish.',
     emoji: '🎬',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 60% 70%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
+      linear-gradient(45deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 60% 70%, rgba(255, 69, 0, 0.2) 0%, transparent 50%),
       linear-gradient(45deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.95) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'instagram-3',
     title: 'Golden Hour Magic',
     content: 'Capture the perfect lighting with warm tones and dramatic shadows.',
     emoji: '🌅',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
+      linear-gradient(60deg, rgba(139, 69, 19, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.3) 0%, transparent 60%),
       radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 50%),
       linear-gradient(60deg, rgba(139, 69, 19, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'instagram-4',
     title: 'Mood & Vibes',
     content: 'Express your personality with bold colors and striking visual elements.',
     emoji: '💫',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(75, 0, 130, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
       linear-gradient(135deg, rgba(75, 0, 130, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'instagram-5',
     title: 'Signature Style',
     content: 'Develop your unique aesthetic with consistent visual branding.',
     emoji: '🎨',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.25) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 30, 0.95) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.25) 0%, transparent 50%),
       radial-gradient(circle at 40% 60%, rgba(138, 43, 226, 0.2) 0%, transparent 50%),
       linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(30, 30, 30, 0.95) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   },
   {
     id: 'instagram-6',
     title: 'Follow My Journey',
     content: 'Join me for more stunning content and behind-the-scenes moments.',
     emoji: '⭐',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: `
+      radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 1) 100%)
+    `,
     backgroundType: 'gradient',
     gradient: `
       radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.3) 0%, transparent 60%),
       radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.2) 0%, transparent 50%),
       linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 1) 100%)
     `,
-    template: 'instagram-user'
+    template: 'instagram-user',
+    titleColor: '#FFFFFF',
+    contentColor: '#FFFFFF'
   }
 ];
 
@@ -420,17 +456,32 @@ export default function TemplatesPage({ onSelectTemplate }: TemplatesPageProps) 
     const updatedTemplate = template.map(slide => ({
       ...slide,
       backgroundImage: selectedImages[slide.id] || undefined,
-      // Ensure gradient and backgroundType are preserved
-      backgroundType: slide.backgroundType || 'color',
+      // Ensure template and background properties are preserved
+      template: slide.template || 'regular', // Ensure template property is preserved
+      backgroundType: slide.backgroundType || (slide.gradient ? 'gradient' : 'color'),
       gradient: slide.gradient || undefined,
+      backgroundColor: slide.backgroundColor || '#1a1a1a',
       // Set default colors for text
       titleColor: slide.titleColor || '#FFFFFF',
       contentColor: slide.contentColor || '#FFFFFF',
       titleAlign: slide.titleAlign || 'center',
-      contentAlign: slide.contentAlign || 'center'
+      contentAlign: slide.contentAlign || 'center',
+      // Ensure position controls are included
+      titlePositionX: slide.titlePositionX || '50',
+      titlePositionY: slide.titlePositionY || '40',
+      contentPositionX: slide.contentPositionX || '50',
+      contentPositionY: slide.contentPositionY || '60',
+      emojiPositionX: slide.emojiPositionX || '50',
+      emojiPositionY: slide.emojiPositionY || '20'
     }));
     
-    console.log('Applying template with templates:', updatedTemplate.map(s => ({ id: s.id, template: s.template, title: s.title })));
+    console.log('Applying template with templates and effects:', updatedTemplate.map(s => ({ 
+      id: s.id, 
+      template: s.template, 
+      title: s.title,
+      backgroundType: s.backgroundType,
+      hasGradient: !!s.gradient
+    })));
     onSelectTemplate(updatedTemplate);
   };
 

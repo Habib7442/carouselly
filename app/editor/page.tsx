@@ -4,7 +4,7 @@ import React, { useRef, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Download, Eye, Plus, Trash2, Copy, Palette, Type, Image as ImageIcon, Smile, AlignLeft, AlignCenter, AlignRight, Move, RotateCcw, AlertCircle } from 'lucide-react';
-import { Canvas, FabricImage, FabricText, Shadow, filters } from 'fabric';
+import { Canvas, FabricImage, FabricText, Shadow, filters, Rect as FabricRect } from 'fabric';
 import { zip } from 'fflate';
 import { saveAs } from 'file-saver';
 import { useCarouselStore } from '@/lib/carousel-store';
@@ -125,8 +125,7 @@ function EditorPageContent() {
         updateSlide(currentSlideData.id, {
           backgroundImage: imageUrl,
           backgroundType: 'image',
-          gradient: undefined,
-          template: 'regular'
+          gradient: undefined
         });
       };
       reader.readAsDataURL(file);
@@ -288,7 +287,28 @@ function EditorPageContent() {
               fabricImg.applyFilters();
             }
             
+            // Add image to canvas first
             canvas.add(fabricImg);
+            
+            // Then add cinematic effects on top of the image
+            if (slide.template === 'photoshoot' || slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
+              // Add dramatic multiply blend mode overlay for cinematic effect
+              const overlay = new FabricRect({
+                left: 0,
+                top: 0,
+                width: canvasSize,
+                height: canvasSize,
+                fill: 'rgba(0, 0, 0, 0.3)',
+                selectable: false
+              });
+              overlay.globalCompositeOperation = 'multiply';
+              canvas.add(overlay);
+              
+              // Add dramatic lighting gradient for Instagram User template
+              if (slide.template === 'instagram-user') {
+                // Skipping detailed accent gradients in exported image to keep processing simple.
+              }
+            }
             addTextToCanvas(canvas, slide);
             downloadCanvas(canvas, slide.title || 'slide');
           });
@@ -613,9 +633,40 @@ function EditorPageContent() {
       backgroundRepeat: 'no-repeat'
     };
 
+    // Apply Cinema Chic template effects automatically
+    if (slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
+      baseStyle.filter = 'brightness(0.9) contrast(1.1) saturate(0.85)';
+      baseStyle.boxShadow = 'inset 0 0 100px rgba(0,0,0,0.3)';
+    }
+
     if (actualBackgroundType === 'gradient' && slide.gradient) {
-      // For gradients, only set the background image
-      baseStyle.backgroundImage = slide.gradient;
+      // Handle complex gradients
+      const gradientStr = slide.gradient.trim();
+      
+      // Check if it's a complex multi-line gradient (Instagram User style)
+      if (gradientStr.includes('\n') || (gradientStr.includes('radial-gradient') && gradientStr.includes('linear-gradient'))) {
+        // For complex gradients, provide a simpler fallback for CSS thumbnails
+        if (slide.template === 'instagram-user') {
+          // Use a dark gradient as fallback that CSS can handle
+          const fallbackGradients = {
+            'instagram-1': 'radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.2) 0%, rgba(255, 20, 147, 0.1) 40%, rgba(0, 0, 0, 1) 100%)',
+            'instagram-2': 'radial-gradient(circle at 40% 30%, rgba(138, 43, 226, 0.2) 0%, rgba(255, 69, 0, 0.1) 40%, rgba(0, 0, 0, 1) 100%)',
+            'instagram-3': 'radial-gradient(circle at 50% 30%, rgba(255, 165, 0, 0.25) 0%, rgba(255, 215, 0, 0.1) 40%, rgba(0, 0, 0, 1) 100%)',
+            'instagram-4': 'radial-gradient(circle at 25% 25%, rgba(255, 0, 255, 0.2) 0%, rgba(0, 255, 255, 0.1) 40%, rgba(0, 0, 0, 1) 100%)',
+            'instagram-5': 'radial-gradient(circle at 60% 40%, rgba(255, 105, 180, 0.2) 0%, rgba(138, 43, 226, 0.1) 40%, rgba(0, 0, 0, 1) 100%)',
+            'instagram-6': 'radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.25) 0%, rgba(255, 20, 147, 0.1) 40%, rgba(0, 0, 0, 1) 100%)'
+          };
+          
+          baseStyle.backgroundImage = fallbackGradients[slide.id as keyof typeof fallbackGradients] || 'radial-gradient(circle, rgba(40,40,40,1) 0%, rgba(0,0,0,1) 100%)';
+        } else {
+          // For other complex gradients, use a simple dark background
+          baseStyle.backgroundColor = slide.backgroundColor || '#1a1a1a';
+        }
+      } else {
+        // For simple gradients, clean up whitespace and use directly
+        const cleanGradient = gradientStr.replace(/\s+/g, ' ').trim();
+        baseStyle.backgroundImage = cleanGradient;
+      }
     } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
       // For images, set all background properties individually with new controls
       baseStyle.backgroundImage = `url(${slide.backgroundImage})`;
@@ -719,7 +770,22 @@ function EditorPageContent() {
       const emojiX = (parseFloat(slide.emojiPositionX || '50') / 100) * 1080;
       const emojiY = (parseFloat(slide.emojiPositionY || '10') / 100) * 1080;
       ctx.fillStyle = '#FFFFFF';
+      
+      // Add enhanced shadow for Cinema Chic templates
+      if (slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+      }
+      
       ctx.fillText(slide.emoji, emojiX, emojiY);
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
     
     // Render title
@@ -731,11 +797,18 @@ function EditorPageContent() {
       ctx.fillStyle = slide.titleColor || '#FFFFFF';
       ctx.textAlign = slide.titleAlign || 'center';
       
-      // Add text shadow
-      ctx.shadowColor = 'rgba(0,0,0,0.3)';
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 2;
+      // Add enhanced text shadow for Cinema Chic templates
+      if (slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 3;
+      } else {
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+      }
       
       // Wrap text if needed
       const maxWidth = 900;
@@ -779,11 +852,18 @@ function EditorPageContent() {
         ctx.fillStyle = slide.contentColor || '#FFFFFF';
         ctx.textAlign = slide.contentAlign || 'center';
         
-        // Add subtle text shadow
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1;
+        // Add enhanced text shadow for Cinema Chic templates
+        if (slide.template === 'cinema-chic' || slide.template === 'instagram-user') {
+          ctx.shadowColor = 'rgba(0,0,0,0.7)';
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2;
+        } else {
+          ctx.shadowColor = 'rgba(0,0,0,0.3)';
+          ctx.shadowBlur = 3;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 1;
+        }
         
         // Wrap content text
         const maxWidth = 900;
@@ -860,39 +940,87 @@ function EditorPageContent() {
     
     // Handle different background types
     if (actualBackgroundType === 'gradient' && slide.gradient) {
-      // Parse and render gradient
-      const gradientMatch = slide.gradient.match(/linear-gradient\(([^)]+)\)/);
-      if (gradientMatch) {
-        const gradientString = gradientMatch[1];
-        const angleMatch = gradientString.match(/^(\d+deg)/);
-        const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
-        const withoutAngle = gradientString.replace(/^\d+deg,?\s*/, '');
-        
-        const colorStopPattern = /((?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[a-fA-F0-9]{3,6}|(?:red|blue|green|yellow|orange|purple|pink|brown|black|white|gray|grey|transparent)))\s*(\d+%)?/g;
-        const colorStops: Array<{color: string, position?: number}> = [];
-        let match;
-        
-        while ((match = colorStopPattern.exec(withoutAngle)) !== null) {
-          const color = match[1].trim();
-          const position = match[2] ? parseInt(match[2]) / 100 : undefined;
-          colorStops.push({ color, position });
-        }
-        
-        if (colorStops.length > 0) {
-          const angleRad = (angle - 90) * Math.PI / 180;
-          const x1 = 540 + Math.cos(angleRad) * 540;
-          const y1 = 540 + Math.sin(angleRad) * 540;
-          const x2 = 540 - Math.cos(angleRad) * 540;
-          const y2 = 540 - Math.sin(angleRad) * 540;
+      // Handle complex gradients (multiple gradients combined)
+      const gradientStr = slide.gradient.trim();
+      
+      // Check if it's a complex gradient with multiple layers
+      if (gradientStr.includes('radial-gradient') || gradientStr.includes(',\n')) {
+        // For complex Instagram User gradients, create a simpler fallback
+        if (slide.template === 'instagram-user') {
+          // Create a dark base with some highlights
+          const baseGradient = ctx.createRadialGradient(540, 540, 0, 540, 540, 700);
+          baseGradient.addColorStop(0, 'rgba(40, 40, 40, 1)');
+          baseGradient.addColorStop(0.6, 'rgba(20, 20, 20, 1)');
+          baseGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
           
-          const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-          colorStops.forEach((stop, index) => {
-            const position = stop.position !== undefined ? stop.position : (index / (colorStops.length - 1));
-            gradient.addColorStop(position, stop.color);
-          });
-          
-          ctx.fillStyle = gradient;
+          ctx.fillStyle = baseGradient;
           ctx.fillRect(0, 0, 1080, 1080);
+          
+          // Add some color accents based on slide ID
+          const slideAccents = {
+            'instagram-1': { color1: 'rgba(255, 215, 0, 0.2)', color2: 'rgba(255, 20, 147, 0.15)' },
+            'instagram-2': { color1: 'rgba(138, 43, 226, 0.2)', color2: 'rgba(255, 69, 0, 0.15)' },
+            'instagram-3': { color1: 'rgba(255, 165, 0, 0.25)', color2: 'rgba(255, 215, 0, 0.15)' },
+            'instagram-4': { color1: 'rgba(255, 0, 255, 0.2)', color2: 'rgba(0, 255, 255, 0.15)' },
+            'instagram-5': { color1: 'rgba(255, 105, 180, 0.2)', color2: 'rgba(138, 43, 226, 0.15)' },
+            'instagram-6': { color1: 'rgba(255, 215, 0, 0.25)', color2: 'rgba(255, 20, 147, 0.15)' }
+          };
+          
+          const accent = slideAccents[slide.id as keyof typeof slideAccents];
+          if (accent) {
+            // Add accent gradients
+            const accent1 = ctx.createRadialGradient(324, 216, 0, 324, 216, 400);
+            accent1.addColorStop(0, accent.color1);
+            accent1.addColorStop(1, 'transparent');
+            ctx.fillStyle = accent1;
+            ctx.fillRect(0, 0, 1080, 1080);
+            
+            const accent2 = ctx.createRadialGradient(756, 864, 0, 756, 864, 350);
+            accent2.addColorStop(0, accent.color2);
+            accent2.addColorStop(1, 'transparent');
+            ctx.fillStyle = accent2;
+            ctx.fillRect(0, 0, 1080, 1080);
+          }
+        } else {
+          // Fallback for other complex gradients
+          ctx.fillStyle = slide.backgroundColor || '#1a1a1a';
+          ctx.fillRect(0, 0, 1080, 1080);
+        }
+      } else {
+        // Parse simple linear gradients
+        const gradientMatch = gradientStr.match(/linear-gradient\(([^)]+)\)/);
+        if (gradientMatch) {
+          const gradientString = gradientMatch[1];
+          const angleMatch = gradientString.match(/^(\d+deg)/);
+          const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
+          const withoutAngle = gradientString.replace(/^\d+deg,?\s*/, '');
+          
+          const colorStopPattern = /((?:rgba?\([^)]+\)|hsla?\([^)]+\)|#[a-fA-F0-9]{3,6}|(?:red|blue|green|yellow|orange|purple|pink|brown|black|white|gray|grey|transparent)))\s*(\d+%)?/g;
+          const colorStops: Array<{color: string, position?: number}> = [];
+          let match;
+          
+          while ((match = colorStopPattern.exec(withoutAngle)) !== null) {
+            const color = match[1].trim();
+            const position = match[2] ? parseInt(match[2]) / 100 : undefined;
+            colorStops.push({ color, position });
+          }
+          
+          if (colorStops.length > 0) {
+            const angleRad = (angle - 90) * Math.PI / 180;
+            const x1 = 540 + Math.cos(angleRad) * 540;
+            const y1 = 540 + Math.sin(angleRad) * 540;
+            const x2 = 540 - Math.cos(angleRad) * 540;
+            const y2 = 540 - Math.sin(angleRad) * 540;
+            
+            const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            colorStops.forEach((stop, index) => {
+              const position = stop.position !== undefined ? stop.position : (index / (colorStops.length - 1));
+              gradient.addColorStop(position, stop.color);
+            });
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 1080);
+          }
         }
       }
     } else if (actualBackgroundType === 'image' && slide.backgroundImage) {
@@ -935,6 +1063,44 @@ function EditorPageContent() {
           ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
           ctx.fillRect(0, 0, 1080, 1080);
           ctx.globalCompositeOperation = 'source-over';
+          
+          // Add enhanced dramatic lighting for Instagram User template
+          if (slide.template === 'instagram-user') {
+            ctx.globalCompositeOperation = 'overlay';
+            const gradient = ctx.createRadialGradient(540, 300, 0, 540, 300, 600);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+            gradient.addColorStop(0.4, 'rgba(255, 215, 0, 0.1)');
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            // Accent color overlays based on slide id for richer cinematic effect
+            const accentMap: Record<string, { c1: string; c2: string }> = {
+              'instagram-1': { c1: 'rgba(255, 20, 147, 0.12)', c2: 'rgba(255, 215, 0, 0.18)' },
+              'instagram-2': { c1: 'rgba(138, 43, 226, 0.12)', c2: 'rgba(255, 69, 0, 0.18)' },
+              'instagram-3': { c1: 'rgba(255, 165, 0, 0.12)', c2: 'rgba(255, 215, 0, 0.18)' },
+              'instagram-4': { c1: 'rgba(255, 0, 255, 0.12)', c2: 'rgba(0, 255, 255, 0.18)' },
+              'instagram-5': { c1: 'rgba(255, 105, 180, 0.12)', c2: 'rgba(138, 43, 226, 0.18)' },
+              'instagram-6': { c1: 'rgba(255, 215, 0, 0.12)', c2: 'rgba(255, 20, 147, 0.18)' }
+            };
+            const accent = accentMap[slide.id] || { c1: 'rgba(255, 255, 255, 0.05)', c2: 'rgba(255, 255, 255, 0.03)' };
+
+            // Top-left accent
+            const accent1 = ctx.createRadialGradient(324, 216, 0, 324, 216, 400);
+            accent1.addColorStop(0, accent.c1);
+            accent1.addColorStop(1, 'transparent');
+            ctx.fillStyle = accent1;
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            // Bottom-right accent
+            const accent2 = ctx.createRadialGradient(756, 864, 0, 756, 864, 350);
+            accent2.addColorStop(0, accent.c2);
+            accent2.addColorStop(1, 'transparent');
+            ctx.fillStyle = accent2;
+            ctx.fillRect(0, 0, 1080, 1080);
+
+            ctx.globalCompositeOperation = 'source-over';
+          }
         }
         
         // Render text content after image loads
@@ -1044,17 +1210,30 @@ function EditorPageContent() {
                     }`}
                     onClick={() => setCurrentSlide(index)}
                   >
-                    <div
-                      className="w-full h-full rounded-md text-white text-xs flex flex-col items-center justify-center p-2"
-                      style={getSlideStyle(slide)}
-                    >
-                      {slide.emoji && (
-                        <div className="text-lg mb-1">{slide.emoji}</div>
-                      )}
-                      <div className="font-medium text-center truncate w-full">
-                        {slide.title}
+                                      <div
+                    className="w-full h-full rounded-md text-white text-xs flex flex-col items-center justify-center p-2"
+                    style={getSlideStyle(slide)}
+                  >
+                    {slide.emoji && (
+                      <div 
+                        className="text-lg mb-1"
+                        style={{
+                          filter: slide.template === 'cinema-chic' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' : undefined
+                        }}
+                      >
+                        {slide.emoji}
                       </div>
+                    )}
+                    <div 
+                      className="font-medium text-center truncate w-full"
+                      style={{
+                        textShadow: slide.template === 'cinema-chic' ? '0 2px 8px rgba(0,0,0,0.9)' : undefined,
+                        fontWeight: slide.template === 'cinema-chic' ? '600' : undefined
+                      }}
+                    >
+                      {slide.title}
                     </div>
+                  </div>
                     
                     {slides.length > 1 && (
                       <div className="absolute -top-2 -right-2 flex gap-1">
@@ -1953,7 +2132,14 @@ function EditorPageContent() {
                 style={{ 
                   aspectRatio: '1/1',
                   maxHeight: '70vh',
-                  width: 'auto'
+                  width: 'auto',
+                  // Apply cinematic effects automatically for Cinema Chic templates
+                  filter: currentSlideData?.template === 'cinema-chic' || currentSlideData?.template === 'instagram-user' 
+                    ? 'brightness(0.95) contrast(1.05) saturate(0.9)' 
+                    : undefined,
+                  boxShadow: currentSlideData?.template === 'cinema-chic' || currentSlideData?.template === 'instagram-user'
+                    ? '0 20px 40px rgba(0,0,0,0.3), inset 0 0 200px rgba(0,0,0,0.2)'
+                    : undefined
                 }}
               />
               
