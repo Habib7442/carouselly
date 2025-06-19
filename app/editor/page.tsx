@@ -61,8 +61,9 @@ const FormattedContent = ({ content }: { content: string }) => {
           <span
             key={index}
             style={{
-              color: '#60A5FA', // Blue color for hashtags
-              fontWeight: '600'
+              color: '#3B82F6', // Bright blue color for hashtags
+              fontWeight: '700',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)' // Add shadow for better visibility
             }}
           >
             {part}
@@ -240,7 +241,7 @@ function EditorPageContent() {
   };
 
   const addTextToCanvas = (canvas: Canvas, slide: CarouselSlide) => {
-    const padding = 120;
+    const padding = 80; // Increased padding for better text containment
     const canvasWidth = 1080;
     const canvasHeight = 1080;
     const contentWidth = canvasWidth - (padding * 2);
@@ -248,7 +249,7 @@ function EditorPageContent() {
     if (slide.emoji) {
       const emoji = new FabricText(slide.emoji, {
         left: canvasWidth / 2,
-        top: 180,
+        top: 120, // Moved up slightly
         fontSize: 80,
         textAlign: 'center',
         originX: 'center',
@@ -259,11 +260,11 @@ function EditorPageContent() {
     }
 
     if (slide.title) {
-      const titleFontSize = 44;
+      const titleFontSize = 38; // Reduced from 44 to prevent overflow
       const titleLines = wrapText(slide.title, contentWidth, titleFontSize, slide.titleFontFamily || 'Inter');
-      const titleLineHeight = titleFontSize * 1.2;
+      const titleLineHeight = titleFontSize * 1.1; // Reduced line height
       const totalTitleHeight = titleLines.length * titleLineHeight;
-      const startY = 350 - (totalTitleHeight / 2);
+      const startY = 280 - (totalTitleHeight / 2); // Adjusted position
 
       titleLines.forEach((line, index) => {
         const title = new FabricText(line, {
@@ -283,11 +284,11 @@ function EditorPageContent() {
     }
 
     if (slide.content) {
-      const contentFontSize = 22;
+      const contentFontSize = 20; // Reduced from 22
       const contentLines = wrapText(slide.content, contentWidth, contentFontSize, slide.contentFontFamily || 'Inter');
-      const contentLineHeight = contentFontSize * 1.4;
+      const contentLineHeight = contentFontSize * 1.3;
       const totalContentHeight = contentLines.length * contentLineHeight;
-      const startY = 500 - (totalContentHeight / 2);
+      const startY = 500 - (totalContentHeight / 2); // Adjusted position
 
       contentLines.forEach((line, index) => {
         // Check if line contains hashtags for special styling
@@ -311,7 +312,7 @@ function EditorPageContent() {
           parts.forEach((part) => {
             if (part.trim()) {
               const isHashtag = part.startsWith('#');
-              const textColor = isHashtag ? '#60A5FA' : (slide.contentColor || '#FFFFFF');
+              const textColor = isHashtag ? '#3B82F6' : (slide.contentColor || '#FFFFFF'); // Bright blue for hashtags
               
               const textObj = new FabricText(part, {
                 left: currentX,
@@ -322,7 +323,13 @@ function EditorPageContent() {
                 fontWeight: isHashtag ? 'bold' : 'normal',
                 originX: 'left',
                 originY: 'center',
-                selectable: false
+                selectable: false,
+                shadow: isHashtag ? new Shadow({
+                  color: 'rgba(0,0,0,0.5)',
+                  blur: 2,
+                  offsetX: 1,
+                  offsetY: 1
+                }) : undefined
               });
               
               canvas.add(textObj);
@@ -599,9 +606,12 @@ function EditorPageContent() {
                       <textarea
                         value={currentSlideData.content || ''}
                         onChange={(e) => updateSlide(currentSlideData.id, { content: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-20 resize-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-24 resize-none"
                         placeholder="Enter slide content"
                       />
+                      <div className="mt-1 text-xs text-gray-500">
+                        {(currentSlideData.content || '').length} characters
+                      </div>
                     </div>
                     
                     <div>
@@ -892,18 +902,21 @@ function EditorPageContent() {
                 )}
                 
                 {/* Content Layer */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-10">
                   {currentSlideData.emoji && (
-                    <div className="absolute top-20 text-5xl">{currentSlideData.emoji}</div>
+                    <div className="absolute top-16 text-4xl">{currentSlideData.emoji}</div>
                   )}
                   
                   {currentSlideData.title && (
                     <h2
-                      className="absolute top-36 text-2xl font-bold text-center w-full px-16"
+                      className="absolute top-28 text-xl font-bold text-center w-full px-8 leading-tight"
                       style={{
                         fontFamily: currentSlideData.titleFontFamily || fontFamilies[0].value,
                         color: currentSlideData.titleColor || '#FFFFFF',
-                        textAlign: currentSlideData.titleAlign || 'center'
+                        textAlign: currentSlideData.titleAlign || 'center',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        hyphens: 'auto'
                       }}
                     >
                       {currentSlideData.title}
@@ -912,11 +925,16 @@ function EditorPageContent() {
                   
                   {currentSlideData.content && (
                     <div
-                      className="absolute top-52 text-sm w-full px-16 leading-relaxed"
+                      className="absolute top-48 text-sm w-full px-8 leading-relaxed"
                       style={{
                         fontFamily: currentSlideData.contentFontFamily || fontFamilies[0].value,
                         color: currentSlideData.contentColor || '#FFFFFF',
-                        textAlign: currentSlideData.contentAlign || 'center'
+                        textAlign: currentSlideData.contentAlign || 'center',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        hyphens: 'auto',
+                        maxHeight: '280px',
+                        overflow: 'hidden'
                       }}
                     >
                       <FormattedContent content={currentSlideData.content} />
