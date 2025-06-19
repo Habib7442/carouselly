@@ -44,21 +44,35 @@ const getStorageSize = (obj: any): number => {
 
 // Helper function to simplify backgrounds for storage
 const simplifySlideForStorage = (slide: CarouselSlide): CarouselSlide => {
+  let simplifiedSlide = { ...slide };
+
+  // Handle photoshoot template gradients
   if (slide.template === 'photoshoot' && slide.backgroundColor && slide.backgroundColor.includes('radial-gradient')) {
-    // Store a simplified version for photoshoot templates
-    return {
-      ...slide,
+    simplifiedSlide = {
+      ...simplifiedSlide,
       backgroundColor: '#1a1a1a', // Simple dark background as fallback
       _originalBackground: 'photoshoot-gradient' // Flag to restore complex gradient
     };
   }
-  return slide;
+
+  // Handle large background images (Data URLs)
+  if (slide.backgroundImage && slide.backgroundImage.startsWith('data:')) {
+    simplifiedSlide = {
+      ...simplifiedSlide,
+      backgroundImage: undefined,
+      _isImageTooLargeForStorage: true
+    };
+  }
+
+  return simplifiedSlide;
 };
 
 // Helper function to restore complex backgrounds
 const restoreSlideFromStorage = (slide: CarouselSlide): CarouselSlide => {
+  let restoredSlide = { ...slide };
+
+  // Restore photoshoot gradients
   if (slide._originalBackground === 'photoshoot-gradient') {
-    // Restore the complex gradient based on slide ID
     const gradients: { [key: string]: string } = {
       'photoshoot-1': `
         radial-gradient(circle at 45% 35%, rgba(255, 165, 0, 0.15) 0%, transparent 35%),
@@ -98,13 +112,22 @@ const restoreSlideFromStorage = (slide: CarouselSlide): CarouselSlide => {
       `
     };
     
-    return {
-      ...slide,
+    restoredSlide = {
+      ...restoredSlide,
       backgroundColor: gradients[slide.id] || slide.backgroundColor,
       _originalBackground: undefined
     };
   }
-  return slide;
+
+  // Clean up storage flags
+  if (slide._isImageTooLargeForStorage) {
+    restoredSlide = {
+      ...restoredSlide,
+      _isImageTooLargeForStorage: undefined
+    };
+  }
+
+  return restoredSlide;
 };
 
 export const useCarouselStore = create<CarouselState>()(

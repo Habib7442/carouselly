@@ -31,6 +31,7 @@ export interface CarouselSlide {
   borderRadius?: string;
   shadow?: string;
   _originalBackground?: string; // Internal flag for storage optimization
+  _isImageTooLargeForStorage?: boolean; // Flag to indicate image was removed for storage
   hashtags?: string[]; // Array of hashtags with different colors
   isList?: boolean; // Flag to indicate if content should be formatted as a list
   listItems?: string[]; // Array of list items
