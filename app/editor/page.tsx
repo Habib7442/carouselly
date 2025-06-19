@@ -940,19 +940,40 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Title Color
                         </label>
-                        <div className="grid grid-cols-6 gap-1">
-                          {textColors.map((color) => (
-                            <button
-                              key={color}
-                              onClick={() => updateSlide(currentSlideData.id, { titleColor: color })}
-                              className={`w-6 h-6 rounded border-2 ${
-                                (currentSlideData.titleColor || '#FFFFFF') === color
-                                  ? 'border-gray-800'
-                                  : 'border-gray-300'
-                              }`}
-                              style={{ backgroundColor: color }}
+                        <div className="space-y-2">
+                          {/* Color Grid */}
+                          <div className="grid grid-cols-6 gap-1">
+                            {textColors.map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => updateSlide(currentSlideData.id, { titleColor: color })}
+                                className={`w-6 h-6 rounded border-2 ${
+                                  (currentSlideData.titleColor || '#FFFFFF') === color
+                                    ? 'border-gray-800'
+                                    : 'border-gray-300'
+                                }`}
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Color Picker */}
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={currentSlideData.titleColor || '#FFFFFF'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { titleColor: e.target.value })}
+                              className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                              title="Custom color picker"
                             />
-                          ))}
+                            <input
+                              type="text"
+                              value={currentSlideData.titleColor || '#FFFFFF'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { titleColor: e.target.value })}
+                              className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                              placeholder="#FFFFFF"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1027,19 +1048,40 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Content Color
                         </label>
-                        <div className="grid grid-cols-6 gap-1">
-                          {textColors.map((color) => (
-                            <button
-                              key={color}
-                              onClick={() => updateSlide(currentSlideData.id, { contentColor: color })}
-                              className={`w-6 h-6 rounded border-2 ${
-                                (currentSlideData.contentColor || '#FFFFFF') === color
-                                  ? 'border-gray-800'
-                                  : 'border-gray-300'
-                              }`}
-                              style={{ backgroundColor: color }}
+                        <div className="space-y-2">
+                          {/* Color Grid */}
+                          <div className="grid grid-cols-6 gap-1">
+                            {textColors.map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => updateSlide(currentSlideData.id, { contentColor: color })}
+                                className={`w-6 h-6 rounded border-2 ${
+                                  (currentSlideData.contentColor || '#FFFFFF') === color
+                                    ? 'border-gray-800'
+                                    : 'border-gray-300'
+                                }`}
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* Color Picker */}
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={currentSlideData.contentColor || '#FFFFFF'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { contentColor: e.target.value })}
+                              className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                              title="Custom color picker"
                             />
-                          ))}
+                            <input
+                              type="text"
+                              value={currentSlideData.contentColor || '#FFFFFF'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { contentColor: e.target.value })}
+                              className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                              placeholder="#FFFFFF"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1094,17 +1136,28 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Horizontal Position: {currentSlideData.titlePositionX || '50'}%
                         </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={currentSlideData.titlePositionX || '50'}
-                          onChange={(e) => updateSlide(currentSlideData.id, { titlePositionX: e.target.value })}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${currentSlideData.titlePositionX || 50}%, #e5e7eb ${currentSlideData.titlePositionX || 50}%, #e5e7eb 100%)`
-                          }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.titlePositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { titlePositionX: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${currentSlideData.titlePositionX || 50}%, #e5e7eb ${currentSlideData.titlePositionX || 50}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.titlePositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { titlePositionX: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
                       </div>
                       
                       {/* Title Vertical Position */}
@@ -1112,17 +1165,28 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Vertical Position: {currentSlideData.titlePositionY || '40'}%
                         </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={currentSlideData.titlePositionY || '40'}
-                          onChange={(e) => updateSlide(currentSlideData.id, { titlePositionY: e.target.value })}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${currentSlideData.titlePositionY || 40}%, #e5e7eb ${currentSlideData.titlePositionY || 40}%, #e5e7eb 100%)`
-                          }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.titlePositionY || '40'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { titlePositionY: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${currentSlideData.titlePositionY || 40}%, #e5e7eb ${currentSlideData.titlePositionY || 40}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.titlePositionY || '40'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { titlePositionY: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
                       </div>
                     </div>
 
@@ -1135,17 +1199,28 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Horizontal Position: {currentSlideData.contentPositionX || '50'}%
                         </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={currentSlideData.contentPositionX || '50'}
-                          onChange={(e) => updateSlide(currentSlideData.id, { contentPositionX: e.target.value })}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${currentSlideData.contentPositionX || 50}%, #e5e7eb ${currentSlideData.contentPositionX || 50}%, #e5e7eb 100%)`
-                          }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.contentPositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { contentPositionX: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #10b981 0%, #10b981 ${currentSlideData.contentPositionX || 50}%, #e5e7eb ${currentSlideData.contentPositionX || 50}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.contentPositionX || '50'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { contentPositionX: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
                       </div>
                       
                       {/* Content Vertical Position */}
@@ -1153,17 +1228,28 @@ function EditorPageContent() {
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           Vertical Position: {currentSlideData.contentPositionY || '60'}%
                         </label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={currentSlideData.contentPositionY || '60'}
-                          onChange={(e) => updateSlide(currentSlideData.id, { contentPositionY: e.target.value })}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${currentSlideData.contentPositionY || 60}%, #e5e7eb ${currentSlideData.contentPositionY || 60}%, #e5e7eb 100%)`
-                          }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.contentPositionY || '60'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { contentPositionY: e.target.value })}
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                            style={{
+                              background: `linear-gradient(to right, #10b981 0%, #10b981 ${currentSlideData.contentPositionY || 60}%, #e5e7eb ${currentSlideData.contentPositionY || 60}%, #e5e7eb 100%)`
+                            }}
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={currentSlideData.contentPositionY || '60'}
+                            onChange={(e) => updateSlide(currentSlideData.id, { contentPositionY: e.target.value })}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                          />
+                          <span className="text-xs text-gray-500">%</span>
+                        </div>
                       </div>
                     </div>
 
@@ -1177,17 +1263,28 @@ function EditorPageContent() {
                           <label className="block text-xs font-medium text-gray-700 mb-2">
                             Horizontal Position: {currentSlideData.emojiPositionX || '50'}%
                           </label>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={currentSlideData.emojiPositionX || '50'}
-                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                            style={{
-                              background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
-                            }}
-                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionX || '50'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionX || 50}%, #e5e7eb ${currentSlideData.emojiPositionX || 50}%, #e5e7eb 100%)`
+                              }}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionX || '50'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionX: e.target.value })}
+                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                          </div>
                         </div>
                         
                         {/* Emoji Vertical Position */}
@@ -1195,17 +1292,28 @@ function EditorPageContent() {
                           <label className="block text-xs font-medium text-gray-700 mb-2">
                             Vertical Position: {currentSlideData.emojiPositionY || '25'}%
                           </label>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={currentSlideData.emojiPositionY || '25'}
-                            onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                            style={{
-                              background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 25}%, #e5e7eb ${currentSlideData.emojiPositionY || 25}%, #e5e7eb 100%)`
-                            }}
-                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionY || '25'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
+                              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${currentSlideData.emojiPositionY || 25}%, #e5e7eb ${currentSlideData.emojiPositionY || 25}%, #e5e7eb 100%)`
+                              }}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={currentSlideData.emojiPositionY || '25'}
+                              onChange={(e) => updateSlide(currentSlideData.id, { emojiPositionY: e.target.value })}
+                              className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                            />
+                            <span className="text-xs text-gray-500">%</span>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1255,24 +1363,55 @@ function EditorPageContent() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Solid Colors
                       </label>
-                      <div className="grid grid-cols-6 gap-2">
-                        {colors.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => updateSlide(currentSlideData.id, { 
-                              backgroundColor: color,
+                      <div className="space-y-2">
+                        {/* Color Grid */}
+                        <div className="grid grid-cols-6 gap-2">
+                          {colors.map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => updateSlide(currentSlideData.id, { 
+                                backgroundColor: color,
+                                backgroundType: 'color',
+                                gradient: undefined,
+                                backgroundImage: undefined
+                              })}
+                              className={`w-8 h-8 rounded-md border-2 ${
+                                currentSlideData.backgroundColor === color
+                                  ? 'border-gray-800'
+                                  : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        
+                        {/* Color Picker */}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={currentSlideData.backgroundColor || colors[0]}
+                            onChange={(e) => updateSlide(currentSlideData.id, { 
+                              backgroundColor: e.target.value,
                               backgroundType: 'color',
                               gradient: undefined,
                               backgroundImage: undefined
                             })}
-                            className={`w-8 h-8 rounded-md border-2 ${
-                              currentSlideData.backgroundColor === color
-                                ? 'border-gray-800'
-                                : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: color }}
+                            className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                            title="Custom background color picker"
                           />
-                        ))}
+                          <input
+                            type="text"
+                            value={currentSlideData.backgroundColor || colors[0]}
+                            onChange={(e) => updateSlide(currentSlideData.id, { 
+                              backgroundColor: e.target.value,
+                              backgroundType: 'color',
+                              gradient: undefined,
+                              backgroundImage: undefined
+                            })}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded"
+                            placeholder="#FF6B6B"
+                          />
+                        </div>
                       </div>
                     </div>
                     
@@ -1366,17 +1505,28 @@ function EditorPageContent() {
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               Horizontal: {currentSlideData.backgroundImageX || '50'}%
                             </label>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.backgroundImageX || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageX: e.target.value })}
-                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${currentSlideData.backgroundImageX || 50}%, #e5e7eb ${currentSlideData.backgroundImageX || 50}%, #e5e7eb 100%)`
-                              }}
-                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={currentSlideData.backgroundImageX || '50'}
+                                onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageX: e.target.value })}
+                                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                style={{
+                                  background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${currentSlideData.backgroundImageX || 50}%, #e5e7eb ${currentSlideData.backgroundImageX || 50}%, #e5e7eb 100%)`
+                                }}
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={currentSlideData.backgroundImageX || '50'}
+                                onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageX: e.target.value })}
+                                className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                              />
+                              <span className="text-xs text-gray-500">%</span>
+                            </div>
                           </div>
                           
                           {/* Image Vertical Position */}
@@ -1384,17 +1534,28 @@ function EditorPageContent() {
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               Vertical: {currentSlideData.backgroundImageY || '50'}%
                             </label>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={currentSlideData.backgroundImageY || '50'}
-                              onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageY: e.target.value })}
-                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                              style={{
-                                background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${currentSlideData.backgroundImageY || 50}%, #e5e7eb ${currentSlideData.backgroundImageY || 50}%, #e5e7eb 100%)`
-                              }}
-                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={currentSlideData.backgroundImageY || '50'}
+                                onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageY: e.target.value })}
+                                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                style={{
+                                  background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${currentSlideData.backgroundImageY || 50}%, #e5e7eb ${currentSlideData.backgroundImageY || 50}%, #e5e7eb 100%)`
+                                }}
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={currentSlideData.backgroundImageY || '50'}
+                                onChange={(e) => updateSlide(currentSlideData.id, { backgroundImageY: e.target.value })}
+                                className="w-16 px-2 py-1 text-xs border border-gray-300 rounded"
+                              />
+                              <span className="text-xs text-gray-500">%</span>
+                            </div>
                           </div>
                         </div>
 
